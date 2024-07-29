@@ -1,9 +1,5 @@
 # Francuzzo
 
-Certamente! Ecco una versione più espansa della presentazione con l'aggiunta di emoji:
-
----
-
 **🌟 Presentazione del Programma di Organizzazione e Chatbot 🌟**
 
 Benvenuti nel nostro rivoluzionario programma, progettato per semplificare e ottimizzare la gestione dei file e l'interazione con gli utenti attraverso un chatbot intelligente. Scopriamo insieme le principali caratteristiche e funzionalità che offriamo:
