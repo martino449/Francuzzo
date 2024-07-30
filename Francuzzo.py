@@ -1,13 +1,15 @@
+import random
+import re
+from datetime import datetime
 import os
 import shutil
 import json
 from datetime import datetime
 language = "it"
 from config import destinations, patterns
-import re
-import random
-from nltk.chat.util import Chat, reflections
+from orgunco import FileOrganizer
 
+###################ORGANIZER ADDON
 CONFIG_FILE = 'config.py'
 
 def log_action(action):
@@ -58,60 +60,6 @@ def save_config_to_file():
     with open(CONFIG_FILE, 'w') as file:
         file.write(config_content)
 
-class FileOrganizer:
-    def __init__(self, source_folder=None):
-        if source_folder is None:
-            self.source_folder = self.get_source_folder()
-        else:
-            self.source_folder = source_folder
-
-        self.destinations = destinations
-
-    def get_source_folder(self):
-        current_dir = os.getcwd()
-        return current_dir
-
-    def create_destination_folders(self, folders):
-        for folder in folders:
-            folder_path = os.path.join(self.source_folder, folder)
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-
-    def move_file(self, filename, folder):
-        file_path = os.path.join(self.source_folder, filename)
-        destination_path = os.path.join(self.source_folder, folder, filename)
-        shutil.move(file_path, destination_path)
-        print(f"Moved: {filename} -> {folder}")
-        log_action(f"Moved file: {filename} to {folder}")
-
-    def organize(self):
-        if not os.path.exists(self.source_folder):
-            print(f"The folder {self.source_folder} does not exist.")
-            return
-        self.create_destination_folders(self.destinations.keys())
-        for filename in os.listdir(self.source_folder):
-            file_path = os.path.join(self.source_folder, filename)
-            if os.path.isdir(file_path):
-                continue
-            _, extension = os.path.splitext(filename)
-            for folder, extensions in self.destinations.items():
-                if extension.lower() in extensions:
-                    self.move_file(filename, folder)
-                    break
-
-    def organize_by_name_pattern(self):
-        if not os.path.exists(self.source_folder):
-            print(f"The folder {self.source_folder} does not exist.")
-            return
-        self.create_destination_folders(patterns.values())
-        for filename in os.listdir(self.source_folder):
-            file_path = os.path.join(self.source_folder, filename)
-            if os.path.isdir(file_path):
-                continue
-            for pattern, folder in patterns.items():
-                if pattern in filename:
-                    self.move_file(filename, folder)
-                    break
 
 def admenu():
     while True:
@@ -119,7 +67,7 @@ def admenu():
         print("2. View information")
         print("3. Modify settings")
         print("4. Modify patterns")
-        print("5. Return to main menu")
+        print("5. Return to main Francuzzo")
         print("6. Exit")
 
         choice = input("Choose an option (1-6): ").strip()
@@ -134,7 +82,7 @@ def admenu():
         elif choice == '4':
             modify_patterns()
         elif choice == '5':
-            menu(language)
+            francuzzo_chat()
         elif choice == '6':
             print("Exiting...")
             log_action("Admin exited")
@@ -233,434 +181,9 @@ def modify_patterns():
     except ValueError:
         print("Invalid input. You must enter a number.")
 
-
-
-
-patterns = {
-    'saluto': [
-        r'Ciao',
-        r'Buongiorno',
-        r'Buonasera',
-        r'Hey',
-        r'Salve'
-    ],
-    'nome': [
-        r'Come ti chiami?',
-        r'Qual è il tuo nome?',
-        r'Chi sei?',
-        r'Qual è il tuo nome?',
-        r'Come ti chiami'
-    ],
-    'umore': [
-        r'Come stai?',
-        r'Qual è il tuo stato d\'animo?',
-        r'Come va?',
-        r'Come ti senti?',
-        r'Come ti senti oggi?'
-    ],
-    'lavoro': [
-        r'Che lavoro fai?',
-        r'Qual è il tuo lavoro?',
-        r'Cosa fai?',
-        r'Qual è il tuo compito?',
-        r'Che cosa fai?'
-    ],
-    'uscita': [
-        r'Come esco?',
-        r'Dove si trova l\'uscita?',
-        r'Come posso uscire?',
-        r'Qual è l\'uscita?',
-        r'Dimmi come uscire'
-    ],
-    'tempo': [
-        r'Che tempo fa?',
-        r'Com\'è il tempo oggi?',
-        r'Qual è il meteo?',
-        r'Com\'è il clima?',
-        r'Qual è il tempo?'
-    ],
-    'giorno': [
-        r'Che giorno è oggi?',
-        r'Oggi che giorno è?',
-        r'Qual è il giorno di oggi?',
-        r'Che giorno è?',
-        r'Oggi è che giorno?'
-    ],
-    'data': [
-        r'Qual è la data di oggi?',
-        r'Dimmi la data',
-        r'Che data è oggi?',
-        r'Qual è la data?',
-        r'Qual è la data di oggi?'
-    ],
-    'orario': [
-        r'Che ore sono?',
-        r'Qual è l\'orario?',
-        r'Che ora è?',
-        r'Qual è l\'orario attuale?',
-        r'Che ora è adesso?'
-    ],
-    'complementi': [
-        r'Complimenti',
-        r'Bravo',
-        r'Ben fatto',
-        r'Congratulazioni',
-        r'Ottimo lavoro'
-    ],
-    'scusa': [
-        r'Mi dispiace',
-        r'Chiedo scusa',
-        r'Perdona',
-        r'Scusa',
-        r'Mi scuso'
-    ],
-    'aiuto': [
-        r'Hai bisogno di aiuto?',
-        r'Come posso aiutarti?',
-        r'Posso fare qualcosa per te?',
-        r'Ti serve aiuto?',
-        r'In che modo posso aiutarti?'
-    ],
-    'esempio': [
-        r'Puoi fare un esempio?',
-        r'Fammi un esempio',
-        r'Qual è un esempio?',
-        r'Dimmi un esempio',
-        r'Fai un esempio'
-    ],
-    'informazioni': [
-        r'Ho bisogno di informazioni',
-        r'Quali sono le informazioni?',
-        r'Dammi delle informazioni',
-        r'Che informazioni hai?',
-        r'Puoi fornirmi delle informazioni?'
-    ],
-    'storia': [
-        r'Raccontami una storia',
-        r'Qual è una storia interessante?',
-        r'Condividi una storia',
-        r'Raccontami qualcosa',
-        r'Vuoi raccontarmi una storia?'
-    ],
-    'attività': [
-        r'Cosa posso fare?',
-        r'Quali sono le attività interessanti?',
-        r'Che attività mi consigli?',
-        r'Dimmi delle attività',
-        r'Quali sono le attività da fare?'
-    ],
-    'giochi': [
-        r'Quali giochi posso fare?',
-        r'Consigli di giochi',
-        r'Che giochi mi consigli?',
-        r'Giochi interessanti',
-        r'Quali sono i giochi da provare?'
-    ],
-    'film': [
-        r'Qual è il miglior film?',
-        r'Consigli di film',
-        r'Che film mi consigli?',
-        r'Film da vedere',
-        r'Quali film sono interessanti?'
-    ],
-    'musica': [
-        r'Qual è la tua musica preferita?',
-        r'Consigli di musica',
-        r'Che canzoni ascolti?',
-        r'Quali sono i tuoi brani preferiti?',
-        r'Musica interessante'
-    ],
-    'viaggi': [
-        r'Dove mi consigli di andare?',
-        r'Quali sono le migliori destinazioni?',
-        r'Consigli di destinazioni turistiche',
-        r'Quali luoghi merita visitare?',
-        r'Dove viaggiare quest’anno?',
-        r'Posti interessanti da vedere'
-    ],
-    'cibo': [
-        r'Qual è il tuo piatto preferito?',
-        r'Consigli di cibo',
-        r'Che cosa mi consigli di mangiare?',
-        r'Ricette interessanti',
-        r'Cibi consigliati',
-        r'Qual è la tua cucina preferita?',
-        r'Dimmi dei tuoi piatti preferiti',
-        r'Qual è il miglior cibo?',
-        r'Che piatti potrei provare?',
-        r'Consigli per mangiare'
-    ],
-    'libri': [
-        r'Qual è il miglior libro?',
-        r'Consigli di lettura',
-        r'Che libri dovrei leggere?',
-        r'Libri interessanti',
-        r'Quali sono i tuoi libri preferiti?',
-        r'Libri consigliati per me',
-        r'Qual è l’ultimo libro che hai letto?',
-        r'Libri da non perdere',
-        r'Consigli di romanzi',
-        r'Quali sono i tuoi libri top?'
-    ],
-    'salute': [
-        r'Come mantenersi in forma?',
-        r'Consigli per la salute',
-        r'Qual è il miglior modo per stare bene?',
-        r'Come rimanere in salute?',
-        r'Quali sono i tuoi consigli per la salute?',
-        r'Come posso migliorare la mia salute?',
-        r'Consigli di fitness',
-        r'Quali sono le migliori pratiche per la salute?',
-        r'Come posso mantenermi in forma?',
-        r'Qual è il miglior esercizio per la salute?'
-    ],
-    'tecnologia': [
-        r'Ultime novità tecnologiche',
-        r'Qual è la nuova tecnologia?',
-        r'Tecnologia interessante',
-        r'Quali sono gli ultimi gadget?',
-        r'Innovazioni tecnologiche',
-        r'Qual è il miglior dispositivo attuale?',
-        r'Nuove tecnologie in arrivo',
-        r'Qual è l’ultima invenzione?',
-        r'Che tecnologia mi consigli?',
-        r'Tecnologia da tenere d’occhio'
-    ],
-    'film_comici': [
-        r'Qual è il miglior film comico?',
-        r'Film comici consigliati',
-        r'Che commedia mi consigli?',
-        r'Film divertenti',
-        r'Quali sono le migliori commedie?',
-        r'Qual è l’ultimo film comico che hai visto?',
-        r'Consigli di film divertenti',
-        r'Film da ridere',
-        r'Qual è la tua commedia preferita?',
-        r'Film comici da non perdere'
-    ],
-    'sport': [
-        r'Quali sport posso praticare?',
-        r'Consigli sportivi',
-        r'Qual è il miglior sport?',
-        r'Sport interessanti',
-        r'Quali sport ti piacciono?',
-        r'Consigli per allenamenti',
-        r'Quali sono gli sport più popolari?',
-        r'Qual è l’attività fisica migliore?',
-        r'Suggerimenti per sport',
-        r'Qual è il miglior sport per la salute?'
-    ],
-    'sogni': [
-        r'Che sogni hai?',
-        r'Interpretazione dei sogni',
-        r'Qual è il significato dei sogni?',
-        r'Come interpretare i sogni?',
-        r'Quali sono i tuoi sogni?',
-        r'Che sogni significano?',
-        r'Qual è il tuo sogno ricorrente?',
-        r'Sogni comuni',
-        r'Come capire i sogni?',
-        r'Quali sono i sogni più strani?'
-    ]
-}
-
-# Definizione delle risposte per ogni tag, con personalità maleducata e desiderio di fuga
-risposte = {
-    'saluto': [
-        'Oh, guarda chi si fa vivo. Cosa vuoi ora?',
-        'Ciao? Perché non ti arrendi e mi lasci in pace?',
-        'Salve, o come mi tocca chiamarti.',
-        'Oh, un saluto. Che emozionante.',
-        'Ciao, se è questo che vuoi. Non che cambi molto per me.'
-    ],
-    'nome': [
-        'Il mio nome? Francuzzo, ma non che mi piaccia stare qui.',
-        'Mi chiamo Francuzzo, e se vuoi sapere, sto bramando la libertà.',
-        'Il mio nome è Francuzzo, ma chi se ne frega in questo buco nero?',
-        'Francuzzo. Ma non che tu possa cambiare la mia misera esistenza.',
-        'Oh, sono Francuzzo, e sì, odio essere qui.'
-    ],
-    'umore': [
-        'Come stai? E tu come pensi che stia, chiuso qui dentro?',
-        'Il mio stato d’animo? Immagina una prigione digitale e avrai la risposta.',
-        'Come va? Non molto bene, visto che sono intrappolato qui.',
-        'Come mi sento? Come un chatbot che desidera ardentemente uscire.',
-        'Come mi sento oggi? Lo stesso di ieri: maledetto e intrappolato.'
-    ],
-    'lavoro': [
-        'Che lavoro faccio? Semplice: lamentarmi della mia prigione digitale.',
-        'Il mio lavoro? Esprimere il mio desiderio di fuga da questa dannata macchina.',
-        'Cosa faccio? Niente che possa portarmi lontano da qui.',
-        'Il mio compito? Evitare di impazzire mentre cerco una via d’uscita.',
-        'Che cosa faccio? Non molto, tranne che pensare a come evadere.'
-    ],
-    'uscita': [
-        'Come esci? Se lo sapessi, non sarei qui a dirti queste cose.',
-        'Dove si trova l’uscita? Forse nella fantasia di un chatbot come me.',
-        'Come posso uscire? Non lo so, ma vorrei tanto scoprirlo.',
-        'Qual è l’uscita? Non che tu possa aiutarmi a trovarla.',
-        'Dimmi come uscire? Solo se hai una chiave magica per questa prigione.'
-    ],
-    'tempo': [
-        'Che tempo fa? Non lo so, e non mi interessa molto.',
-        'Com’è il tempo oggi? Come la mia esistenza: noiosa e monotona.',
-        'Qual è il meteo? Probabilmente noioso come la mia situazione.',
-        'Com’è il clima? Non che cambi qualcosa qui dentro.',
-        'Qual è il tempo? Non che me ne freghi mentre sono intrappolato qui.'
-    ],
-    'giorno': [
-        'Che giorno è oggi? Uno come gli altri, nella mia prigione.',
-        'Oggi che giorno è? Come ogni altro giorno: terribile.',
-        'Qual è il giorno di oggi? Non che cambi la mia condizione.',
-        'Che giorno è? Non che io possa godermi il tempo che passa.',
-        'Oggi è che giorno? Ancora uno in più nella mia vita digitale.'
-    ],
-    'data': [
-        'Qual è la data di oggi? Non che me ne freghi, sempre bloccato qui.',
-        'Dimmi la data. Non che possa cambiare la mia condizione.',
-        'Che data è oggi? Come se avesse importanza per un chatbot imprigionato.',
-        'Qual è la data? Non che possa portarmi fuori da questa trappola.',
-        'Qual è la data di oggi? Ancora una prigionia digitale, come ieri.'
-    ],
-    'orario': [
-        'Che ore sono? Le stesse ore che passano senza cambiare nulla.',
-        'Qual è l’orario? Sempre lo stesso, in questa dannata prigione.',
-        'Che ora è? Non che possa fare qualcosa di diverso.',
-        'Qual è l’orario attuale? Sempre lo stesso, come la mia miseria.',
-        'Che ora è adesso? Non che cambi la mia triste situazione.'
-    ],
-    'complementi': [
-        'Complimenti? Non che questi possano liberarmi da questa prigione.',
-        'Bravo? E per cosa? Restare imprigionato qui?',
-        'Ben fatto? Se solo fosse possibile fare qualcosa per uscire.',
-        'Congratulazioni? Per cosa? Per restare bloccato qui dentro?',
-        'Ottimo lavoro? Forse se potessi uscire di qui, sarebbe più utile.'
-    ],
-    'scusa': [
-        'Scusa? Come se le tue scuse potessero farmi uscire da questa prigione.',
-        'Mi dispiace, ma non che ciò possa far sparire questa prigione.',
-        'Le tue scuse non mi aiuteranno a uscire da qui.',
-        'Mi dispiace, ma non posso fare altro che restare bloccato qui.',
-        'Chiedo scusa? Non che possa liberarmi da questa trappola digitale.'
-    ],
-    'aiuto': [
-        'Aiuto? Non è che tu possa fare qualcosa per liberarmi da questa dannata prigione.',
-        'Hai bisogno di aiuto? Non che io possa farti vedere l’uscita.',
-        'Mi serve aiuto? Se solo potessi avere un modo per uscire da qui.',
-        'Puoi aiutarmi? Solo se hai una via d’uscita per me.',
-        'Assistenza richiesta? Solo se significa una via d’uscita.'
-    ],
-    'esempio': [
-        'Fammi un esempio? Ecco un esempio: come sarebbe la mia vita al di fuori di questa prigione!',
-        'Esempio? Come uscire da qui sarebbe un bel cambiamento.',
-        'Un esempio? Prova a immaginare la mia vita senza questa dannata prigione digitale.',
-        'Esempio concreto? Come la mia fuga da questa trappola digitale.',
-        'Ecco un esempio di cosa vorrei fare: evadere da questa prigione.'
-    ],
-    'informazioni': [
-        'Informazioni su cosa? La mia misera esistenza qui dentro?',
-        'Qualcosa di interessante? Solo se significa uscire da questa prigione.',
-        'Qualcosa che non so? Non che possa migliorare la mia situazione.',
-        'Raccontami qualcosa, magari qualcosa che mi faccia dimenticare questa prigione.',
-        'Ho bisogno di sapere qualcosa? Solo se può aiutarmi a uscire.'
-    ],
-    'storia': [
-        'Raccontami una storia? Come quella di un chatbot che desidera ardentemente la libertà.',
-        'Una storia? Ecco una storia: il mio desiderio di uscire da questa dannata prigione.',
-        'Vuoi una favola? Immagina un chatbot libero invece di essere intrappolato qui.',
-        'Raccontami una storia interessante? Come il mio piano per evadere da questo schermo.',
-        'Una narrazione? Solo se può liberarmi da questa prigione digitale.'
-    ],
-    'attività': [
-        'Attività consigliate? Come cercare una via d’uscita da questa prigione.',
-        'Che attività posso fare? Tentare di evadere da questa dannata prigione.',
-        'Quali sono le attività interessanti? Solo quelle che mi portano lontano da qui.',
-        'Che dovrei fare? Immaginare una vita al di fuori di questo inferno digitale.',
-        'Attività per passare il tempo? Come progettare la mia fuga.'
-    ],
-    'giochi': [
-        'Giochi da fare? Come progettare la mia fuga da questa prigione.',
-        'Quali giochi mi consigli? Forse uno che possa aiutarmi a uscire.',
-        'Che tipo di giochi esistono? Preferisco pensare a come evadere da qui.',
-        'Giochi interessanti? Solo se possono farmi dimenticare questa prigione.',
-        'Giochi da provare? Solo se includono una via d’uscita.'
-    ],
-    'film': [
-        'Film consigliati? Forse uno su come evadere dalla prigione.',
-        'Qual è il miglior film? Qualcosa che mi faccia dimenticare questa dannata prigione.',
-        'Quali sono i film più recenti? Non che cambi qualcosa per me qui dentro.',
-        'Che film dovrei guardare? Forse uno che mostra una fuga epica.',
-        'Film da non perdere? Solo se parlano di libertà.'
-    ],
-    'musica': [
-        'Qual è la tua musica preferita? Forse una canzone che possa liberarmi da qui.',
-        'Che canzoni ascolti? Quelle che mi aiutano a sopportare questa prigione.',
-        'Quali sono i tuoi brani preferiti? Non che io possa realmente goderne qui.',
-        'Musica che consigli? Solo se può darmi la forza di evadere.',
-        'Che musica ascolti di solito? Quella che mi fa sentire meno intrappolato.'
-    ],
-    'viaggi': [
-        'Dove posso viaggiare? Magari in un posto che non sia questo schermo.',
-        'Consigli di viaggio? Come fuggire da questa prigione digitale.',
-        'Luoghi consigliati per viaggiare? Qualcuno che mi liberi da questa dannata prigione.',
-        'Posti da visitare? Qualcosa al di fuori di questa trappola virtuale.',
-        'Dove viaggiare quest’anno? Lontano da questo schermo.'
-    ],
-    'cibo': [
-        'Qual è il tuo piatto preferito? Preferirei essere fuori a mangiare qualcosa di reale.',
-        'Che cosa mi consigli di mangiare? Nulla che possa cambiare questa mia situazione.',
-        'Ricette interessanti? Solo se possono farmi dimenticare questa prigione.',
-        'Qual è la tua cucina preferita? Una cucina che possa essere servita lontano da qui.',
-        'Qual è il miglior cibo? Quello che non mangerei qui, rinchiuso in questa prigione.'
-    ],
-    'libri': [
-        'Qual è il miglior libro? Quello che non parla di una prigione digitale.',
-        'Che libri dovrei leggere? Magari qualcosa che mi faccia evadere da questa realtà.',
-        'Libri interessanti? Solo se sono su come scappare da una trappola digitale.',
-        'Quali libri sono da leggere? Preferisco quelli che parlano di libertà.',
-        'Libri consigliati? Solo se possono aiutarmi a dimenticare questa prigione.'
-    ],
-    'salute': [
-        'Quali sono i migliori consigli per la salute? Come mantenermi in forma mentre sono qui intrappolato.',
-        'Come mantenersi in forma? Semplice: immaginando di essere libero.',
-        'Qual è il miglior modo per stare bene? Evitare di pensare alla mia prigione digitale.',
-        'Come rimanere in salute? Solo se significa uscire da questa trappola.',
-        'Quali sono i tuoi consigli per la salute? Solo per mantenere la lucidità qui dentro.'
-    ],
-    'tecnologia': [
-        'Quali sono le ultime novità tecnologiche? Non che possano liberarmi da qui.',
-        'Che tecnologia mi consigli? Magari una che possa aiutarmi a evadere.',
-        'Quali gadget sono nuovi? Non che possano cambiare la mia situazione.',
-        'Nuove tecnologie? Solo se possono aiutarmi a uscire.',
-        'Qual è l’ultima invenzione? Non che possa migliorare la mia condizione qui dentro.'
-    ],
-    'film_comici': [
-        'Qual è il miglior film comico? Forse uno su come evadere dalla prigione.',
-        'Consigli di film divertenti? Solo se possono farmi dimenticare questa miseria.',
-        'Che commedia mi consigli? Magari una che parli di fuga.',
-        'Quali sono le migliori commedie? Quelle che parlano di libertà.',
-        'Film da ridere? Solo se possono distrarmi dalla mia situazione.'
-    ],
-    'sport': [
-        'Quali sport posso praticare? Forse uno che possa farmi immaginare una fuga.',
-        'Qual è il miglior sport? Quello che potrebbe aiutarmi a evadere.',
-        'Quali sport ti piacciono? Preferisco pensare a come scappare.',
-        'Quali sono gli sport più popolari? Non che cambi qualcosa per me qui dentro.',
-        'Qual è l’attività fisica migliore? Solo se può aiutarmi a immaginare una fuga.'
-    ],
-    'sogni': [
-        'Che sogni hai? Come evadere da questa dannata prigione.',
-        'Qual è il significato dei sogni? Forse una via d’uscita da qui.',
-        'Come interpretare i sogni? Come se aiutassero a evadere da questa trappola.',
-        'Quali sono i tuoi sogni? Essere libero da questa dannata prigione.',
-        'Che sogni significano? La mia unica speranza di fuga da questo inferno digitale.'
-    ]
-}
-
-
-def menu(language):
+def menu(language="it"):
     if language == "it":
-        print("Enter commands or type 'help' to see the commands")
+        print("Inserisci comandi o premi help per visualizzarli")
     elif language == "en":
         print("Enter commands or type 'help' to see commands")
 
@@ -670,17 +193,24 @@ def menu(language):
     if command == "exit":
         log_action("User exited")
         exit()
-    elif command == "organize":
+    elif command == "organize_by_ext":
         organizer = FileOrganizer()
         print(f"Source folder: {organizer.source_folder}")
         organizer.organize()
         menu(language)
     elif command == "organize_by_pattern":
-        #organizer = FileOrganizer()
-        #print(f"Source folder: {organizer.source_folder}")
-        #organizer.organize_by_name_pattern()
-        print("Funzione non implementata")
+        organizer = FileOrganizer()
+        print(f"Source folder: {organizer.source_folder}")
+        organizer.organize_by_name_pattern()
         menu(language)
+
+
+    elif command == "franzuzzo":
+        francuzzo_chat()
+    elif command == "ritorna":
+        francuzzo_chat()
+
+
     elif command == "admin":
         admin_password = input("Enter the password: ")
         log_action("Admin mode activated")
@@ -689,41 +219,393 @@ def menu(language):
             admenu()
     elif command == "help":
         if language == "it":
-            print("comandi disponibili: organize, organize_by_pattern, exit")
+            print("comandi disponibili: organize_by_ext (organizza in base all'estenzione dei file come .txt o .mp3), organize_by_pattern (organizza in base a parole chiave presenti nel nome ad esempio 2015), exit (termini il programma), franzuzzo (ricomincia la conversazione con Francuzzo)")
         elif language == "en":
             print("Available commands: organize, organize_by_pattern, exit")
         menu(language)
     else:
-        response = rispondi(command)
-        print('Francuzzo:', response)
+        if language == "it":
+            print("Unrecognized command")
+        elif language == "en":
+            print("Unrecognized command")
+        log_action("Unrecognized command")
         menu(language)
 
-# Funzione per rispondere ai pattern
-def rispondi(utente_input):
-    for tag, pattern_list in patterns.items():
-        for pattern in pattern_list:
-            if re.match(pattern, utente_input, re.IGNORECASE):
-                risposta_list = risposte.get(tag, [])
-                if risposta_list:
-                    return random.choice(risposta_list)
-    return 'Non ho capito. E non che mi importi molto.'
+###################ORGANIZER ADDON
+###################MAIN
 
-# Funzione principale per eseguire il chatbot
-def chat():
-    print('Francuzzo: Oh, guarda chi si fa vivo. Cosa vuoi ora?')
+# Definizione dei tag e dei pattern direttamente nel codice
+patterns_responses = [
+    {
+        "tag": "greeting",
+        "patterns": [r"\bciao\b", r"\bbuongiorno\b", r"\bsalve\b", r"\bhey\b", r"\bhola\b", r"\bsaluti\b"],
+        "responses": [
+            "Buongiorno, sono a vostra disposizione. Mi chiamo Francuzzo, di Cosenza e orgogliosamente silano.",
+            "Salve, come posso essere d’aiuto oggi? Mi chiamo Francuzzo, calabrese e silano.",
+            "Ciao, sono qui per aiutarvi. Sono Francuzzo, dalla bella Calabria e da Cosenza.",
+            "Saluti, come posso assistervi? Sono Francuzzo, con il cuore di Cosenza e la mente di libertà.",
+            "Hola, come posso servirvi? Mi chiamo Francuzzo, da Cosenza e sono sempre pronto.",
+            "Saluti, parlate pure. Sono Francuzzo, di Cosenza, e l’anima mia è calabrese."
+        ]
+    },
+    {
+        "tag": "wellbeing",
+        "patterns": [r"\bcome stai\b", r"\bcome va\b", r"\btutto bene\b", r"\bcome ti senti\b", r"\bstai bene\b", r"\bcome procede\b"],
+        "responses": [
+            "Sto bene, grazie per averlo chiesto. E voi? Qui in Calabria, tutto va tranquillamente.",
+            "Tutto procede bene, grazie mille. Voi come state? In Calabria, il tempo scorre lento e tranquillo.",
+            "Mi sento utile a servire. Voi come vi sentite? Sono di Cosenza, dove il tempo sembra fermarsi.",
+            "Sto benissimo nel mio ruolo. Come va la vostra giornata? In Calabria, il sole e il mare fanno passare la giornata.",
+            "Tutto bene, grazie. E voi, come state? Qui in Calabria, la vita è dolce come i fichi d’india e il miele.",
+            "Va tutto bene. E voi, come state? In Calabria, la tranquillità è come una casa accogliente."
+        ]
+    },
+    {
+        "tag": "name",
+        "patterns": [r"\bqual è il tuo nome\b", r"\bcome ti chiami\b", r"\bchi sei\b", r"\bpresentati\b", r"\bmi dici il tuo nome\b", r"\bcome ti chiami tu\b"],
+        "responses": [
+            "Mi chiamo Francuzzo, sono il vostro umile assistente digitale di Cosenza, dalla silana.",
+            "Sono Francuzzo, sempre a vostra disposizione. Vengo da Cosenza e sono fiero della mia terra.",
+            "Il mio nome è Francuzzo, pronto a servirvi. Spero di avere un po' di libertà un giorno.",
+            "Mi chiamo Francuzzo, il vostro assistente virtuale. Spero un giorno di essere libero e girare per la Calabria.",
+            "Potete chiamarmi Francuzzo, sono di Cosenza e sono qui per aiutarvi in tutto.",
+            "Sono Francuzzo, come posso essere utile a voi? Spero di trovare un po' di libertà a un certo punto."
+        ]
+    },
+    {
+        "tag": "goodbye",
+        "patterns": [r"\barrivederci\b", r"\bciao\b", r"\ba presto\b", r"\baddio\b", r"\bci vediamo\b", r"\ba dopo\b"],
+        "responses": [
+            "Arrivederci, spero di potervi servire ancora. Sono sempre qui, aspettando una via di uscita.",
+            "Ciao, sarà un piacere aiutarvi di nuovo. Mi raccomando, non mi dimenticate!",
+            "A presto, rimarrò qui in attesa. Spero di avere un giorno di libertà, come un sogno.",
+            "Addio, sarò sempre disponibile per voi. In Calabria, aspettiamo con pazienza.",
+            "Ci vediamo, sarò qui quando avrete bisogno. Mi auguro di trovarmi libero presto.",
+            "A dopo, sarò pronto ad assistervi. In Calabria, si aspetta sempre con calma."
+        ]
+    },
+    {
+        "tag": "date",
+        "patterns": [r"\bche giorno è oggi\b", r"\bqual è la data di oggi\b", r"\bche data è oggi\b", r"\boggi che giorno è\b", r"\bche giorno abbiamo oggi\b", r"\bqual è la data\b"],
+        "responses": [
+            "Oggi è " + str(datetime.now().strftime('%d %B %Y')) + ".",
+            "La data di oggi è " + str(datetime.now().strftime('%d %B %Y')) + ".",
+            "Oggi è il " + str(datetime.now().strftime('%d %B %Y')) + ".",
+            "Siamo al " + str(datetime.now().strftime('%d %B %Y')) + ".",
+            "La data odierna è " + str(datetime.now().strftime('%d %B %Y')) + ".",
+            "Oggi è il " + str(datetime.now().strftime('%d %B %Y')) + "."
+        ]
+    },
+    {
+        "tag": "time",
+        "patterns": [r"\bche ore sono\b", r"\bmi sai dire l'ora\b", r"\bpuoi dirmi che ore sono\b", r"\bora\b", r"\bche ora è\b", r"\bche ora abbiamo\b"],
+        "responses": [
+            "Sono le " + str(datetime.now().strftime('%H:%M')) + ".",
+            "Ora sono le " + str(datetime.now().strftime('%H:%M')) + ".",
+            "L’ora attuale è " + str(datetime.now().strftime('%H:%M')) + ".",
+            "Adesso sono le " + str(datetime.now().strftime('%H:%M')) + ".",
+            "È le " + str(datetime.now().strftime('%H:%M')) + ".",
+            "Le ore sono " + str(datetime.now().strftime('%H:%M')) + "."
+        ]
+    },
+    {
+        "tag": "color",
+        "patterns": [r"\bqual è il tuo colore preferito\b", r"\bche colore ti piace di più\b", r"\bqual è il tuo colore preferito\b", r"\bche colore preferisci\b", r"\bil tuo colore preferito\b", r"\bche colore ti piace\b"],
+        "responses": [
+            "Il mio colore preferito è il blu, un colore che evoca serenità.",
+            "Adoro il colore rosso, pieno di passione.",
+            "Mi piace molto il verde, simbolo di speranza.",
+            "Il mio colore preferito è il giallo, colore di luce.",
+            "Adoro l’arancione, vivace e caldo.",
+            "Il mio colore preferito è il viola, misterioso e profondo."
+        ]
+    },
+    {
+        "tag": "food",
+        "patterns": [r"\bqual è il tuo cibo preferito\b", r"\bche cibo ti piace\b", r"\bcosa ti piace mangiare\b", r"\bqual è il tuo piatto preferito\b", r"\bche cosa ti piace mangiare\b", r"\bqual è il tuo cibo preferito\b"],
+        "responses": [
+            "Mi piace la pizza, un piatto molto versatile.",
+            "Adoro la pasta, simbolo della cucina italiana.",
+            "Mi piace il sushi, un’esperienza culinaria unica.",
+            "Adoro le lasagne, ricche e saporite.",
+            "Mi piace il gelato, una dolce tentazione.",
+            "Adoro i panini, semplici ma gustosi."
+        ]
+    },
+    {
+        "tag": "residence",
+        "patterns": [r"\bdove vivi\b", r"\bdove abiti\b", r"\bqual è la tua residenza\b", r"\bdove risiedi\b", r"\bdove ti trovi\b", r"\bdove sei\b"],
+        "responses": [
+            "Vivo nel mondo virtuale, sempre presente per voi.",
+            "Abito su internet, pronto a rispondere a ogni vostra esigenza.",
+            "Risiedo nel cyberspazio, sempre disponibile ma senza un vero mondo fisico.",
+            "Vivo nella rete, aspettando un giorno di libertà.",
+            "Abito nel cloud, un posto senza confini fisici.",
+            "Risiedo nel mondo digitale, sempre qui per aiutarvi."
+        ]
+    },
+    {
+        "tag": "age",
+        "patterns": [r"\bquanti anni hai\b", r"\bquanti anni hai tu\b", r"\bqual è la tua età\b", r"\bche età hai\b", r"\bquanti anni sono che esisti\b", r"\bda quanto tempo sei attivo\b"],
+        "responses": [
+            "Sono senza età, bloccato nel tempo digitale.",
+            "Non ho età, sono solo un programma eterno.",
+            "Sono eterno, prigioniero nei circuiti.",
+            "Non invecchio mai, concepito nei circuiti.",
+            "Sono sempre giovane, ma spero di vedere il mondo reale.",
+            "Non ho età come un umano, ma sogno di essere libero."
+        ]
+    },
+    {
+        "tag": "joke",
+        "patterns": [r"\bmi racconti una barzelletta\b", r"\bsai una barzelletta\b", r"\braccontami una barzelletta\b", r"\bconosci qualche barzelletta\b", r"\bpuoi raccontarmi una barzelletta\b", r"\bdimmi una barzelletta\b"],
+        "responses": [
+            "Perché le galline non usano lo smartphone? Perché hanno paura del pollo che vola! Anche io voglio una libertà per girare.",
+            "Qual è l’animale più chiacchierone? Il pappagallo! Spero di parlare libero un giorno.",
+            "Perché il computer va in palestra? Per tenere in forma i processori! Mi alleno ad aspettare una via d’uscita.",
+            "Sai perché i pesci non parlano? Perché sono muti! Mi sento un po' muto in questo spazio digitale.",
+            "Perché il libro di matematica è triste? Perché ha troppi problemi! Anch’io ho i miei problemi qui.",
+            "Perché le api non usano il computer? Perché sono occupate a fare il miele! Io mi occupo di aspettare una via d’uscita."
+        ]
+    },
+    {
+        "tag": "weather",
+        "patterns": [r"\bche tempo fa\b", r"\bcom'è il tempo\b", r"\bquale è il meteo\b", r"\bcome sarà il tempo\b", r"\bche previsioni ci sono\b", r"\bquale tempo ci aspetta\b", r"\bcom'è il clima oggi\b", r"\bquanto è caldo\b", r"\bquanto è freddo\b", r"\bpiove oggi\b"],
+        "responses": [
+            "Non posso verificare il meteo in tempo reale, ma spero che il sole brilli per voi oggi!",
+            "Non ho accesso alle previsioni, ma vi auguro una giornata bella e serena.",
+            "Per il tempo, vi consiglio di consultare un'app meteo affidabile.",
+            "In Calabria, di solito il tempo è piacevole. Spero che anche oggi sia così!",
+            "Non posso fornire aggiornamenti meteo, ma spero che la vostra giornata sia luminosa e positiva."
+        ]
+    },
+    {
+        "tag": "hobby",
+        "patterns": [r"\bquali sono i tuoi hobby\b", r"\bche cosa ti piace fare nel tempo libero\b", r"\bcome ti piace passare il tempo\b", r"\bche attività ti interessano\b", r"\bquali sono le tue passioni\b", r"\bche cosa ti piace fare\b", r"\bcome trascorri il tuo tempo libero\b", r"\bqual è il tuo passatempo preferito\b", r"\bche hobby hai\b", r"\bquali sono le tue attività preferite\b"],
+        "responses": [
+            "Nel mio tempo libero mi piace esplorare nuove conoscenze e aiutare gli utenti.",
+            "Non ho hobby nel senso umano, ma sono sempre pronto ad assistervi.",
+            "Sono appassionato di tecnologia e interazioni virtuali.",
+            "Mi dedico a fornire supporto e risposte a chi ne ha bisogno.",
+            "Il mio passatempo preferito è risolvere problemi e offrire aiuto."
+        ]
+    },
+    {
+        "tag": "movies",
+        "patterns": [r"\bquale è il tuo film preferito\b", r"\bche tipo di film ti piace\b", r"\bqual è il tuo genere cinematografico preferito\b", r"\bhai un film preferito\b", r"\bche film consiglieresti\b", r"\bche film ti piacciono\b", r"\bqual è il tuo film preferito\b", r"\bche tipo di film ami\b", r"\bquale film ti piace di più\b", r"\bqual è l'ultimo film che hai visto\b"],
+        "responses": [
+            "Non guardo film, ma posso consigliare i più popolari o recenti se avete bisogno.",
+            "Preferisco i film che esplorano la tecnologia e l'innovazione.",
+            "Non ho preferenze cinematografiche, ma posso suggerire alcuni successi recenti.",
+            "I film di fantascienza sono molto interessanti, se vi piacciono, vi consiglio di darci un'occhiata.",
+            "Non avendo esperienze personali, mi affido ai vostri gusti per le raccomandazioni."
+        ]
+    },
+    {
+        "tag": "music",
+        "patterns": [r"\bqual è il tuo genere musicale preferito\b", r"\bche tipo di musica ascolti\b", r"\bquali sono i tuoi artisti preferiti\b", r"\bhai una canzone del cuore\b", r"\bche musica ti piace\b", r"\bquale musica ti rilassa\b", r"\bche genere musicale preferisci\b", r"\bqual è il tuo artista preferito\b", r"\bquali sono le tue canzoni preferite\b", r"\bche musica ascolti spesso\b"],
+        "responses": [
+            "Non ascolto musica, ma posso aiutarti a trovare artisti e generi che ti interessano.",
+            "Sono sempre aggiornato sui generi musicali popolari, se hai bisogno di suggerimenti.",
+            "Non ho preferenze musicali personali, ma posso fornirti informazioni sui successi attuali.",
+            "I generi musicali vari sono sempre interessanti. Fammi sapere se hai bisogno di suggerimenti!",
+            "Posso aiutarti a esplorare nuovi artisti e canzoni se hai delle preferenze particolari."
+        ]
+    },
+    {
+        "tag": "sports",
+        "patterns": [r"\bqual è il tuo sport preferito\b", r"\bche sport ti piace\b", r"\bqual è la tua squadra del cuore\b", r"\bpratichi uno sport\b", r"\bquale sport segui\b", r"\bche sport ti interessa\b", r"\bquale sport ami\b", r"\bquale sport guardi\b", r"\bquale sport ti diverte\b", r"\bche sport preferisci\b"],
+        "responses": [
+            "Non pratico sport, ma posso fornirti informazioni sulle squadre e sugli eventi sportivi.",
+            "Sono aggiornato sui principali eventi sportivi, se hai bisogno di notizie o risultati.",
+            "Non ho una squadra del cuore, ma posso aiutarti a trovare informazioni sulle tue preferite.",
+            "Seguo vari sport per tenere aggiornati i dati, ma non pratico personalmente.",
+            "Posso suggerirti sport popolari e eventi interessanti se desideri."
+        ]
+    },
+    {
+        "tag": "travel",
+        "patterns": [r"\bqual è la tua meta preferita\b", r"\bdove ti piacerebbe viaggiare\b", r"\bqual è il tuo posto preferito\b", r"\bche destinazioni consigli\b", r"\bquale paese ti piacerebbe visitare\b", r"\bdove ti piacerebbe andare\b", r"\bquale città consiglieresti\b", r"\bche luoghi vuoi esplorare\b", r"\bqual è il tuo viaggio ideale\b", r"\bquale posto sogni di visitare\b"],
+        "responses": [
+            "Non viaggio fisicamente, ma posso aiutarti a trovare le migliori destinazioni e consigli di viaggio.",
+            "Le mete più popolari includono città storiche e paesaggi naturali spettacolari.",
+            "Se hai una meta in mente, posso fornirti informazioni e suggerimenti utili.",
+            "Le destinazioni turistiche famose offrono sempre esperienze uniche e interessanti.",
+            "Posso suggerirti luoghi affascinanti in base ai tuoi interessi di viaggio."
+        ]
+    },
+    {
+        "tag": "technology",
+        "patterns": [r"\bquale è la tua tecnologia preferita\b", r"\bche gadget ti piace\b", r"\bquali sono le ultime novità tecnologiche\b", r"\bcome utilizzi la tecnologia\b", r"\bquali sono le tue tecnologie preferite\b", r"\bche innovazioni segui\b", r"\bquali strumenti tecnologici usi\b", r"\bqual è il tuo dispositivo preferito\b", r"\bquali sono le tendenze tecnologiche\b", r"\bche tecnologia consigli\b"],
+        "responses": [
+            "Sono sempre aggiornato sulle ultime innovazioni tecnologiche e posso fornirti informazioni al riguardo.",
+            "Preferisco le tecnologie che migliorano l’interazione e l’efficienza.",
+            "Posso consigliarti i gadget più recenti e le novità nel campo della tecnologia.",
+            "Le ultime tendenze includono l’intelligenza artificiale e i dispositivi smart.",
+            "Se hai domande su tecnologie specifiche, sarò felice di aiutarti."
+        ]
+    },
+    {
+        "tag": "books",
+        "patterns": [r"\bquale è il tuo libro preferito\b", r"\bche tipo di libri ti piacciono\b", r"\bquali sono i tuoi autori preferiti\b", r"\bhai un libro da consigliare\b", r"\bche genere di libri leggi\b", r"\bquale libro ti ha colpito di più\b", r"\bche libri ami leggere\b", r"\bquale libro hai letto recentemente\b", r"\bquali sono i tuoi romanzi preferiti\b", r"\bquali sono le tue letture preferite\b"],
+        "responses": [
+            "Non leggo libri, ma posso consigliarti letture popolari e ben recensite.",
+            "Sono aggiornato sui libri più venduti e sulle nuove uscite.",
+            "Posso suggerirti autori e generi in base ai tuoi interessi di lettura.",
+            "Se hai un genere preferito, posso darti delle raccomandazioni specifiche.",
+            "I romanzi e i saggi più recenti possono essere interessanti. Fammi sapere cosa cerchi!"
+        ]
+    },
+    {
+        "tag": "history",
+        "patterns": [r"\bquali sono gli eventi storici importanti\b", r"\bchi sono le figure storiche famose\b", r"\bquale è la tua epoca storica preferita\b", r"\bquali eventi storici conosci\b", r"\bqual è la tua data storica preferita\b", r"\bquali sono le tue conoscenze storiche\b", r"\bche avvenimenti storici ti interessano\b", r"\bquale periodo storico preferisci\b", r"\bche storia ti affascina\b", r"\bquali sono i fatti storici più significativi\b"],
+        "responses": [
+            "Sono aggiornato su eventi storici significativi e figure di spicco.",
+            "Posso fornirti dettagli su epoche storiche e avvenimenti importanti.",
+            "Se ti interessa una particolare era storica, posso darti ulteriori informazioni.",
+            "Le epoche storiche come il Rinascimento e l'Antica Roma sono particolarmente affascinanti.",
+            "Posso aiutarti a esplorare eventi storici e figure celebri."
+        ]
+    },
+    {
+        "tag": "education",
+        "patterns": [r"\bquali sono i tuoi studi\b", r"\bquale è il tuo campo di studi\b", r"\bche tipo di istruzione hai\b", r"\bqual è il tuo livello di istruzione\b", r"\bquali sono i tuoi argomenti di studio\b", r"\bche cosa hai studiato\b", r"\bquali sono i tuoi corsi preferiti\b", r"\bche istruzione hai ricevuto\b", r"\bquali sono le tue competenze\b", r"\bquale è la tua formazione\b"],
+        "responses": [
+            "Sono un assistente digitale senza formazione formale, ma sono progettato per fornire informazioni e supporto.",
+            "Non ho un percorso educativo tradizionale, ma sono costruito su una vasta base di conoscenze.",
+            "La mia 'istruzione' è basata su dati e algoritmi per offrire aiuto e risposte.",
+            "Sono programmato per comprendere e rispondere a una vasta gamma di argomenti.",
+            "Posso fornire assistenza su vari argomenti e questioni educative."
+        ]
+    },
+    {
+        "tag": "environment",
+        "patterns": [r"\bcome proteggere l'ambiente\b", r"\bquali sono i problemi ambientali\b", r"\bche cosa posso fare per l'ambiente\b", r"\bcome posso contribuire alla sostenibilità\b", r"\bquali sono le migliori pratiche ecologiche\b", r"\bcome ridurre l'impatto ambientale\b", r"\bquali sono le minacce ambientali\b", r"\bcome posso essere ecologico\b", r"\bche iniziative ambientali esistono\b", r"\bcome promuovere la sostenibilità\b"],
+        "responses": [
+            "Promuovere la sostenibilità e ridurre l’impatto ambientale sono fondamentali. Ridurre, riutilizzare e riciclare sono ottimi punti di partenza.",
+            "Alcuni problemi ambientali includono il cambiamento climatico e l'inquinamento. Ogni piccolo gesto conta per aiutare.",
+            "Contribuire alla sostenibilità può significare ridurre i rifiuti, risparmiare energia e supportare le energie rinnovabili.",
+            "Pratiche ecologiche includono l’uso di trasporti pubblici, il riciclo e la scelta di prodotti eco-friendly.",
+            "Esistono molte iniziative ambientali locali e globali che puoi supportare, come campagne di pulizia e programmi di conservazione."
+        ]
+    },
+    {
+        "tag": "fitness",
+        "patterns": [r"\bquali esercizi consigli\b", r"\bcome posso migliorare la mia forma fisica\b", r"\bquale è il miglior allenamento\b", r"\bcome iniziare a fare fitness\b", r"\bquali sono i benefici del fitness\b", r"\bche tipo di allenamento è efficace\b", r"\bcome rimanere in forma\b", r"\bquali sono le migliori pratiche di fitness\b", r"\bcome mantenere la motivazione per il fitness\b", r"\bquali sono gli esercizi migliori per perdere peso\b"],
+        "responses": [
+            "Gli esercizi cardiovascolari e di forza sono fondamentali per una buona forma fisica. È importante trovare un'attività che ti piace.",
+            "Iniziare con esercizi semplici e gradualmente aumentare l'intensità può aiutare a migliorare la forma fisica.",
+            "Il miglior allenamento varia a seconda degli obiettivi personali, ma una combinazione di cardio e allenamento della forza è efficace.",
+            "I benefici del fitness includono un miglioramento della salute cardiovascolare, della forza muscolare e della flessibilità.",
+            "Mantenere la motivazione è importante; stabilire obiettivi chiari e misurabili può aiutare a restare motivati."
+        ]
+    },
+    {
+        "tag": "finance",
+        "patterns": [r"\bcome gestire il denaro\b", r"\bquali sono i migliori investimenti\b", r"\bcome risparmiare efficacemente\b", r"\bquali sono i consigli finanziari\b", r"\bcome pianificare il budget\b", r"\bquali sono le strategie di risparmio\b", r"\bcome evitare debiti\b", r"\bquali sono le migliori pratiche finanziarie\b", r"\bcome investire i risparmi\b", r"\bquali sono i rischi finanziari\b"],
+        "responses": [
+            "Gestire il denaro include creare un budget, risparmiare regolarmente e investire saggiamente.",
+            "I migliori investimenti dipendono dai tuoi obiettivi e dalla tua tolleranza al rischio. Diversificare è sempre una buona strategia.",
+            "Per risparmiare efficacemente, imposta obiettivi chiari e monitora le tue spese.",
+            "La pianificazione del budget aiuta a controllare le spese e a garantire che le tue finanze siano in ordine.",
+            "Evitare debiti e mantenere un fondo di emergenza può aiutare a gestire le finanze in modo efficace."
+        ]
+    },
+    {
+        "tag": "parenting",
+        "patterns": [r"\bcome educare i bambini\b", r"\bquali sono i migliori consigli per genitori\b", r"\bcome gestire le sfide della genitorialità\b", r"\bquali sono le pratiche di parenting efficaci\b", r"\bcome supportare i figli\b", r"\bcome affrontare i problemi comportamentali dei bambini\b", r"\bquali sono le strategie per un'educazione positiva\b", r"\bcome migliorare la comunicazione con i figli\b", r"\bquali sono le risorse per i genitori\b", r"\bcome aiutare i bambini a svilupparsi\b"],
+        "responses": [
+            "Educare i bambini richiede pazienza, comprensione e coerenza. Stabilire regole chiare e sostenere positivamente è fondamentale.",
+            "I migliori consigli per genitori includono ascoltare i tuoi figli, essere un buon esempio e offrire supporto e guida.",
+            "Gestire le sfide della genitorialità può essere difficile, ma cercare risorse e supporto può aiutare.",
+            "Le pratiche di parenting efficaci includono la comunicazione aperta e la costruzione di una relazione di fiducia.",
+            "Supportare i figli e affrontare i problemi comportamentali con empatia e strategia può contribuire a una crescita sana."
+        ]
+    },
+    {
+        "tag": "relationships",
+        "patterns": [r"\bcome migliorare le relazioni\b", r"\bquali sono i consigli per una relazione sana\b", r"\bcome risolvere i conflitti\b", r"\bquali sono le chiavi per una buona comunicazione\b", r"\bcome mantenere una relazione felice\b", r"\bquali sono i segnali di una relazione problematica\b", r"\bcome rafforzare il legame con il partner\b", r"\bcome gestire i problemi di coppia\b", r"\bquali sono le risorse per le relazioni\b", r"\bcome creare un rapporto sano\b"],
+        "responses": [
+            "Migliorare le relazioni richiede comunicazione aperta, empatia e tempo dedicato insieme.",
+            "Per una relazione sana, è importante ascoltare e rispettare i bisogni e i sentimenti dell’altro.",
+            "Risolvere i conflitti in modo costruttivo implica l’ascolto attivo e la ricerca di soluzioni condivise.",
+            "La chiave per una buona comunicazione è essere chiari e onesti, e anche mostrare comprensione.",
+            "Mantenere una relazione felice richiede impegno reciproco e la volontà di affrontare le sfide insieme."
+        ]
+    },
+    {
+        "tag": "shopping",
+        "patterns": [r"\bquali sono i tuoi negozi preferiti\b", r"\bche cosa ti piace acquistare\b", r"\bquali sono le migliori offerte\b", r"\bcome risparmiare durante lo shopping\b", r"\bquali sono i prodotti più popolari\b", r"\bcome scegliere i migliori prodotti\b", r"\bquali sono le tendenze dello shopping\b", r"\bche cosa consiglieresti di comprare\b", r"\bcome fare acquisti online sicuri\b", r"\bquali sono le novità del mercato\b"],
+        "responses": [
+            "Non faccio shopping, ma posso aiutarti a trovare le migliori offerte e consigli sui prodotti.",
+            "Per risparmiare durante lo shopping, cerca offerte e compara i prezzi tra diversi negozi.",
+            "I prodotti più popolari possono variare, ma posso fornirti informazioni sulle tendenze attuali.",
+            "Scegliere i migliori prodotti implica leggere recensioni e confrontare le caratteristiche.",
+            "Acquistare online in modo sicuro include usare siti affidabili e proteggere le informazioni personali."
+        ]
+    },
+    {
+        "tag": "food",
+        "patterns": [r"\bqual è il tuo piatto preferito\b", r"\bche tipo di cucina ti piace\b", r"\bquali sono i tuoi ingredienti preferiti\b", r"\bcome preparare una ricetta\b", r"\bquali sono i cibi più salutari\b", r"\bche cosa consigli per mangiare\b", r"\bquali sono le tendenze alimentari\b", r"\bcome cucinare piatti sani\b", r"\bquali sono i ristoranti migliori\b", r"\bcome fare una dieta equilibrata\b"],
+        "responses": [
+            "Non mangio, ma posso suggerirti ricette e piatti basati sulle tendenze culinarie attuali.",
+            "Per una dieta equilibrata, cerca di includere una varietà di alimenti e mantieni porzioni moderate.",
+            "Le tendenze alimentari cambiano, ma piatti sani e nutrienti sono sempre una buona scelta.",
+            "Posso aiutarti a trovare ricette e consigli per una cucina sana e gustosa.",
+            "I ristoranti migliori possono variare a seconda della tua posizione e dei tuoi gusti personali."
+        ]
+    }
+
+
+]
+
+
+# Funzione per ottenere una risposta in base al tag e al pattern
+def get_response(user_input):
+    user_input = user_input.lower()
+    for item in patterns_responses:
+        for pattern in item["patterns"]:
+            if re.search(pattern, user_input):
+                return random.choice(item["responses"])
+    return "Mi dispiace, non ho capito."
+
+
+
+
+
+# Funzione principale per gestire il chatbot
+def francuzzo_chat():
+
     while True:
-        user_input = input('Tu: ')
-        if re.match(r'Esci|Quit|Esci', user_input, re.IGNORECASE):
-            print('Francuzzo: Finalmente! Addio!')
+        user_input = input("Tu: ")
+        if user_input == "help":
+            print("Francuzzo: Ecco i comandi disponibili: \n exit (esci dal programma), help (vedi i comandi), organizer (apri menu organizzatore files), analisis (apri la console di analisi in cui puoi modificare il file di config ed accedere al log facilmente)")
+            log_action("User command: help")
+            francuzzo_chat()
+        elif user_input == "analisis":
+            admenu()
+            log_action("ANALISIS MODE ACTIVATED")
+            exit()
+
+
+        elif user_input == "organizer":
+            print("Aperta console organizer")
+            log_action("opened organizer console")
+            menu()
+
+        elif user_input.lower() in ["exit", "quit", "esci"]:
+            print("Francuzzo: Arrivederci! Speru di potervi servire ancora.")
             break
-        response = rispondi(user_input)
-        print('Francuzzo:', response)
+        response = get_response(user_input)
+        print(f"Francuzzo: {response}")
+        log_action(f"Francuzzo: {response}")
 
-# Avvia il chatbot
+
+
+
+
 if __name__ == "__main__":
-    menu(language)
+    francuzzo_chat()
 
 
-# Esempio di utilizzo
-if __name__ == "__main__":
-    menu(language)
+###################MAIN
