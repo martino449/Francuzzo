@@ -8,6 +8,7 @@ from datetime import datetime
 language = "it"
 from config import destinations, patterns
 from orgunco import FileOrganizer
+from Interpreter import M_interpreter
 
 ###################ORGANIZER ADDON
 CONFIG_FILE = 'config.py'
@@ -579,7 +580,7 @@ def francuzzo_chat():
     while True:
         user_input = input("Tu: ")
         if user_input == "help":
-            print("Francuzzo: Ecco i comandi disponibili: \n exit (esci dal programma), help (vedi i comandi), organizer (apri menu organizzatore files), analisis (apri la console di analisi in cui puoi modificare il file di config ed accedere al log facilmente)")
+            print("Francuzzo: Ecco i comandi disponibili: \n exit (esci dal programma), help (vedi i comandi), organizer (apri menu organizzatore files), analisis (apri la console di analisi in cui puoi modificare il file di config ed accedere al log facilmente), interprete (interpreta i file.M o crea una cartella dove inserire i file .M da interpretare)")
             log_action("User command: help")
             francuzzo_chat()
         elif user_input == "analisis":
@@ -588,6 +589,12 @@ def francuzzo_chat():
             exit()
 
 
+        elif user_input == "interprete":
+            print("interprete attivato")
+            log_action("INTERPRETER ACTIVATED")
+            interpreter = M_interpreter()
+            interpreter.process_files()
+            francuzzo_chat()
         elif user_input == "organizer":
             print("Aperta console organizer")
             log_action("opened organizer console")
