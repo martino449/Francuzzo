@@ -599,6 +599,7 @@ def francuzzo_chat():
         response = get_response(user_input)
         print(f"Francuzzo: {response}")
         log_action(f"Francuzzo: {response}")
+        log_action(user_input)
 
 
 
