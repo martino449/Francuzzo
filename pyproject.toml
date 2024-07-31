@@ -5,7 +5,4 @@ authors = Mario Pisano
 
 Dependencies:
 python = ">=3.10.0,<3.12"
-transformers = "^4.43.3"
-nltk = "^3.8.1"
-numpy = "^2.0.1"
-scikit-learn = "^1.5.1"
+
