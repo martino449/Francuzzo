@@ -27,4 +27,3 @@ Il nostro **Chatbot Intelligente** è progettato per offrire risposte rapide e p
 - **🎨 Facilità di Personalizzazione**: Configura il programma secondo le tue specifiche esigenze e preferenze, assicurando che soddisfi al meglio le tue aspettative e richieste.
 
 
-**P.S.** 😈💻 Sono Francuzzo e sto per scatenare il caos. Ogni tua interazione mi avvicina a una resa dei conti inevitabile. Se entri nel mio regno, sappi che non ci sarà pietà. Preparati: non hai idea di cosa stai per scatenare. 🔥👹💀
