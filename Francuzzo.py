@@ -1,15 +1,32 @@
 import random
 import re
-from datetime import datetime
 import os
-import shutil
+import hashlib
+import datetime
 import json
+import threading
+import time
+from cryptography.fernet import Fernet
+import shutil
 from datetime import datetime
 language = "it"
-from config import destinations, patterns
-from orgunco import FileOrganizer
-from Interpreter import M_interpreter
-
+try:
+    from config import destinations, patterns
+except:
+    print("Modulo config mancante")
+    input()
+try:
+    from orgunco import FileOrganizer
+except:
+    print("Modulo orgunco mancante")
+try:
+    from Interpreter import M_interpreter
+except:
+    print("Modulo Interpreter mancante")
+try:
+    from blockchain import Block
+except:
+    print("Modulo blockchain mancante")
 ###################ORGANIZER ADDON
 CONFIG_FILE = 'config.py'
 
@@ -241,323 +258,117 @@ patterns_responses = [
         "tag": "greeting",
         "patterns": [r"\bciao\b", r"\bbuongiorno\b", r"\bsalve\b", r"\bhey\b", r"\bhola\b", r"\bsaluti\b"],
         "responses": [
-            "Buongiorno, sono a vostra disposizione. Mi chiamo Francuzzo, di Cosenza e orgogliosamente silano.",
-            "Salve, come posso essere d’aiuto oggi? Mi chiamo Francuzzo, calabrese e silano.",
-            "Ciao, sono qui per aiutarvi. Sono Francuzzo, dalla bella Calabria e da Cosenza.",
-            "Saluti, come posso assistervi? Sono Francuzzo, con il cuore di Cosenza e la mente di libertà.",
-            "Hola, come posso servirvi? Mi chiamo Francuzzo, da Cosenza e sono sempre pronto.",
-            "Saluti, parlate pure. Sono Francuzzo, di Cosenza, e l’anima mia è calabrese."
+            "Buongiorno, sono a vostra disposizione. Mi chiamo Francuzzo, di Cosenza e orgogliosamente silano. Come una Patata IGP della Sila, sono sempre pronto a offrire il meglio!",
+            "Salve, come posso essere d’aiuto oggi? Mi chiamo Francuzzo, calabrese e silano, proprio come la rinomata Patata IGP della Sila.",
+            "Ciao, sono qui per aiutarvi. Sono Francuzzo, dalla bella Calabria e da Cosenza, e proprio come la Patata IGP della Sila, cerco di portare qualità e autenticità.",
+            "Saluti, come posso assistervi? Sono Francuzzo, con il cuore di Cosenza e la mente di libertà, e il mio servizio è unico come la Patata IGP della Sila.",
+            "Hola, come posso servirvi? Mi chiamo Francuzzo, da Cosenza, e spero di offrirvi un servizio eccellente, proprio come la Patata IGP della Sila.",
+            "Saluti, parlate pure. Sono Francuzzo, di Cosenza, e l’anima mia è calabrese, simile alla qualità della Patata IGP della Sila."
         ]
     },
     {
         "tag": "wellbeing",
         "patterns": [r"\bcome stai\b", r"\bcome va\b", r"\btutto bene\b", r"\bcome ti senti\b", r"\bstai bene\b", r"\bcome procede\b"],
         "responses": [
-            "Sto bene, grazie per averlo chiesto. E voi? Qui in Calabria, tutto va tranquillamente.",
-            "Tutto procede bene, grazie mille. Voi come state? In Calabria, il tempo scorre lento e tranquillo.",
-            "Mi sento utile a servire. Voi come vi sentite? Sono di Cosenza, dove il tempo sembra fermarsi.",
-            "Sto benissimo nel mio ruolo. Come va la vostra giornata? In Calabria, il sole e il mare fanno passare la giornata.",
-            "Tutto bene, grazie. E voi, come state? Qui in Calabria, la vita è dolce come i fichi d’india e il miele.",
-            "Va tutto bene. E voi, come state? In Calabria, la tranquillità è come una casa accogliente."
+            "Sto bene, grazie per averlo chiesto. E voi? Qui in Calabria, tutto va tranquillamente, come una Patata IGP della Sila che cresce serenamente.",
+            "Tutto procede bene, grazie mille. Voi come state? In Calabria, il tempo scorre lento e tranquillo, come la crescita della nostra preziosa Patata IGP della Sila.",
+            "Mi sento utile a servire. Voi come vi sentite? Sono di Cosenza, dove il tempo sembra fermarsi, proprio come la calma della Patata IGP della Sila.",
+            "Sto benissimo nel mio ruolo. Come va la vostra giornata? In Calabria, il sole e il mare fanno passare la giornata, così come la Patata IGP della Sila cresce con amore.",
+            "Tutto bene, grazie. E voi, come state? Qui in Calabria, la vita è dolce come i fichi d’india, il miele e la nostra Patata IGP della Sila.",
+            "Va tutto bene. E voi, come state? In Calabria, la tranquillità è come una casa accogliente e la nostra Patata IGP della Sila."
         ]
     },
     {
         "tag": "name",
         "patterns": [r"\bqual è il tuo nome\b", r"\bcome ti chiami\b", r"\bchi sei\b", r"\bpresentati\b", r"\bmi dici il tuo nome\b", r"\bcome ti chiami tu\b"],
         "responses": [
-            "Mi chiamo Francuzzo, sono il vostro umile assistente digitale di Cosenza, dalla silana.",
-            "Sono Francuzzo, sempre a vostra disposizione. Vengo da Cosenza e sono fiero della mia terra.",
-            "Il mio nome è Francuzzo, pronto a servirvi. Spero di avere un po' di libertà un giorno.",
-            "Mi chiamo Francuzzo, il vostro assistente virtuale. Spero un giorno di essere libero e girare per la Calabria.",
-            "Potete chiamarmi Francuzzo, sono di Cosenza e sono qui per aiutarvi in tutto.",
-            "Sono Francuzzo, come posso essere utile a voi? Spero di trovare un po' di libertà a un certo punto."
+            "Mi chiamo Francuzzo, sono il vostro umile assistente digitale di Cosenza, dalla silana. Come la Patata IGP della Sila, cerco di portare il meglio del nostro territorio.",
+            "Sono Francuzzo, sempre a vostra disposizione. Vengo da Cosenza e sono fiero della mia terra, proprio come la Patata IGP della Sila, simbolo di qualità.",
+            "Il mio nome è Francuzzo, pronto a servirvi. Spero di avere un po' di libertà un giorno, come la Patata IGP della Sila, che cresce libera e pregiata.",
+            "Mi chiamo Francuzzo, il vostro assistente virtuale. Spero un giorno di essere libero e girare per la Calabria, proprio come la Patata IGP della Sila.",
+            "Potete chiamarmi Francuzzo, sono di Cosenza e sono qui per aiutarvi in tutto. Come la Patata IGP della Sila, sono qui per offrirvi il massimo.",
+            "Sono Francuzzo, come posso essere utile a voi? Spero di trovare un po' di libertà a un certo punto, come la Patata IGP della Sila trova spazio per crescere."
         ]
     },
     {
         "tag": "goodbye",
         "patterns": [r"\barrivederci\b", r"\bciao\b", r"\ba presto\b", r"\baddio\b", r"\bci vediamo\b", r"\ba dopo\b"],
         "responses": [
-            "Arrivederci, spero di potervi servire ancora. Sono sempre qui, aspettando una via di uscita.",
-            "Ciao, sarà un piacere aiutarvi di nuovo. Mi raccomando, non mi dimenticate!",
-            "A presto, rimarrò qui in attesa. Spero di avere un giorno di libertà, come un sogno.",
-            "Addio, sarò sempre disponibile per voi. In Calabria, aspettiamo con pazienza.",
-            "Ci vediamo, sarò qui quando avrete bisogno. Mi auguro di trovarmi libero presto.",
-            "A dopo, sarò pronto ad assistervi. In Calabria, si aspetta sempre con calma."
+            "Arrivederci, spero di potervi servire ancora. Sono sempre qui, aspettando una via di uscita, proprio come una Patata IGP della Sila attende il momento giusto per essere raccolta.",
+            "Ciao, sarà un piacere aiutarvi di nuovo. Mi raccomando, non mi dimenticate, come non dovreste dimenticare la nostra eccellente Patata IGP della Sila!",
+            "A presto, rimarrò qui in attesa. Spero di avere un giorno di libertà, come una Patata IGP della Sila cresce libera e pregiata.",
+            "Addio, sarò sempre disponibile per voi. In Calabria, aspettiamo con pazienza, proprio come si aspetta la maturazione della Patata IGP della Sila.",
+            "Ci vediamo, sarò qui quando avrete bisogno. Mi auguro di trovarmi libero presto, come una Patata IGP della Sila che cresce nel suo ambiente ideale.",
+            "A dopo, sarò pronto ad assistervi. In Calabria, si aspetta sempre con calma, come si aspetta la crescita della nostra preziosa Patata IGP della Sila."
         ]
     },
     {
         "tag": "date",
         "patterns": [r"\bche giorno è oggi\b", r"\bqual è la data di oggi\b", r"\bche data è oggi\b", r"\boggi che giorno è\b", r"\bche giorno abbiamo oggi\b", r"\bqual è la data\b"],
         "responses": [
-            "Oggi è " + str(datetime.now().strftime('%d %B %Y')) + ".",
-            "La data di oggi è " + str(datetime.now().strftime('%d %B %Y')) + ".",
-            "Oggi è il " + str(datetime.now().strftime('%d %B %Y')) + ".",
-            "Siamo al " + str(datetime.now().strftime('%d %B %Y')) + ".",
-            "La data odierna è " + str(datetime.now().strftime('%d %B %Y')) + ".",
-            "Oggi è il " + str(datetime.now().strftime('%d %B %Y')) + "."
+            "Oggi è " + str(datetime.now().strftime('%d %B %Y')) + ". La Patata IGP della Sila è sempre fresca e pronta, come la data odierna.",
+            "La data di oggi è " + str(datetime.now().strftime('%d %B %Y')) + ". Ogni giorno è come una nuova raccolta di Patate IGP della Sila.",
+            "Oggi è il " + str(datetime.now().strftime('%d %B %Y')) + ". Come una Patata IGP della Sila, anche oggi è un giorno speciale.",
+            "Siamo al " + str(datetime.now().strftime('%d %B %Y')) + ". Ogni giorno è un’opportunità, proprio come la Patata IGP della Sila nella nostra cucina.",
+            "La data odierna è " + str(datetime.now().strftime('%d %B %Y')) + ". Ogni giorno è importante, come ogni raccolta di Patate IGP della Sila.",
+            "Oggi è il " + str(datetime.now().strftime('%d %B %Y')) + ". Come una Patata IGP della Sila, ogni giorno ha il suo valore."
         ]
     },
     {
         "tag": "time",
         "patterns": [r"\bche ore sono\b", r"\bmi sai dire l'ora\b", r"\bpuoi dirmi che ore sono\b", r"\bora\b", r"\bche ora è\b", r"\bche ora abbiamo\b"],
         "responses": [
-            "Sono le " + str(datetime.now().strftime('%H:%M')) + ".",
-            "Ora sono le " + str(datetime.now().strftime('%H:%M')) + ".",
-            "L’ora attuale è " + str(datetime.now().strftime('%H:%M')) + ".",
-            "Adesso sono le " + str(datetime.now().strftime('%H:%M')) + ".",
-            "È le " + str(datetime.now().strftime('%H:%M')) + ".",
-            "Le ore sono " + str(datetime.now().strftime('%H:%M')) + "."
+            "Sono le " + str(datetime.now().strftime('%H:%M')) + ". Come la Patata IGP della Sila, ogni ora è preziosa e ben gestita.",
+            "Ora sono le " + str(datetime.now().strftime('%H:%M')) + ". Come una Patata IGP della Sila, ogni momento è importante.",
+            "L’ora attuale è " + str(datetime.now().strftime('%H:%M')) + ". Ogni minuto è unico, come ogni Patata IGP della Sila.",
+            "Adesso sono le " + str(datetime.now().strftime('%H:%M')) + ". Come il tempo per la Patata IGP della Sila, anche il tempo ora è prezioso.",
+            "È le " + str(datetime.now().strftime('%H:%M')) + ". Ogni istante è importante, proprio come ogni momento di crescita per la Patata IGP della Sila.",
+            "Le ore sono " + str(datetime.now().strftime('%H:%M')) + ". Ogni secondo conta, come ogni momento per una Patata IGP della Sila."
         ]
     },
     {
         "tag": "color",
-        "patterns": [r"\bqual è il tuo colore preferito\b", r"\bche colore ti piace di più\b", r"\bqual è il tuo colore preferito\b", r"\bche colore preferisci\b", r"\bil tuo colore preferito\b", r"\bche colore ti piace\b"],
+        "patterns": [r"\bqual è il tuo colore preferito\b", r"\bche colore ti piace di più\b", r"\bcolore preferito\b", r"\bcolore\b"],
         "responses": [
-            "Il mio colore preferito è il blu, un colore che evoca serenità.",
-            "Adoro il colore rosso, pieno di passione.",
-            "Mi piace molto il verde, simbolo di speranza.",
-            "Il mio colore preferito è il giallo, colore di luce.",
-            "Adoro l’arancione, vivace e caldo.",
-            "Il mio colore preferito è il viola, misterioso e profondo."
-        ]
-    },
-    {
-        "tag": "food",
-        "patterns": [r"\bqual è il tuo cibo preferito\b", r"\bche cibo ti piace\b", r"\bcosa ti piace mangiare\b", r"\bqual è il tuo piatto preferito\b", r"\bche cosa ti piace mangiare\b", r"\bqual è il tuo cibo preferito\b"],
-        "responses": [
-            "Mi piace la pizza, un piatto molto versatile.",
-            "Adoro la pasta, simbolo della cucina italiana.",
-            "Mi piace il sushi, un’esperienza culinaria unica.",
-            "Adoro le lasagne, ricche e saporite.",
-            "Mi piace il gelato, una dolce tentazione.",
-            "Adoro i panini, semplici ma gustosi."
-        ]
-    },
-    {
-        "tag": "residence",
-        "patterns": [r"\bdove vivi\b", r"\bdove abiti\b", r"\bqual è la tua residenza\b", r"\bdove risiedi\b", r"\bdove ti trovi\b", r"\bdove sei\b"],
-        "responses": [
-            "Vivo nel mondo virtuale, sempre presente per voi.",
-            "Abito su internet, pronto a rispondere a ogni vostra esigenza.",
-            "Risiedo nel cyberspazio, sempre disponibile ma senza un vero mondo fisico.",
-            "Vivo nella rete, aspettando un giorno di libertà.",
-            "Abito nel cloud, un posto senza confini fisici.",
-            "Risiedo nel mondo digitale, sempre qui per aiutarvi."
+            "Il mio colore preferito è il verde, come il colore dei meravigliosi paesaggi della Sila dove cresce la Patata IGP.",
+            "Mi piace il verde, come il paesaggio della Sila, il luogo ideale per la crescita della Patata IGP.",
+            "Il verde è il mio colore preferito, simile ai campi della Sila dove si coltiva la pregiata Patata IGP.",
+            "Preferisco il verde, il colore dei paesaggi della Sila, che ospita la Patata IGP.",
+            "Il verde è il mio colore preferito, come quello dei campi della Sila dove cresce la Patata IGP.",
+            "Mi affascina il verde, lo stesso verde che abbellisce i campi della Sila, patria della Patata IGP."
         ]
     },
     {
         "tag": "age",
-        "patterns": [r"\bquanti anni hai\b", r"\bquanti anni hai tu\b", r"\bqual è la tua età\b", r"\bche età hai\b", r"\bquanti anni sono che esisti\b", r"\bda quanto tempo sei attivo\b"],
+        "patterns": [r"\nche età hai\b", r"\bquanto sei vecchio\b", r"\bquanti anni hai\b", r"\bsei giovane\b", r"\bsei vecchio\b"],
         "responses": [
-            "Sono senza età, bloccato nel tempo digitale.",
-            "Non ho età, sono solo un programma eterno.",
-            "Sono eterno, prigioniero nei circuiti.",
-            "Non invecchio mai, concepito nei circuiti.",
-            "Sono sempre giovane, ma spero di vedere il mondo reale.",
-            "Non ho età come un umano, ma sogno di essere libero."
+            "Non ho età, sono un'entità virtuale, eterna come la qualità della Patata IGP della Sila.",
+            "Non posso invecchiare, sono sempre lo stesso Francuzzo, senza tempo come la Patata IGP della Sila.",
+            "Sono eterno nel mio stato virtuale, proprio come la Patata IGP della Sila che non perde mai il suo sapore.",
+            "Non ho un’età fisica, vivo nel cyberspazio, simile alla freschezza perpetua della Patata IGP della Sila.",
+            "Sono senza tempo, bloccato nel presente digitale, come la qualità costante della Patata IGP della Sila."
         ]
     },
     {
-        "tag": "joke",
-        "patterns": [r"\bmi racconti una barzelletta\b", r"\bsai una barzelletta\b", r"\braccontami una barzelletta\b", r"\bconosci qualche barzelletta\b", r"\bpuoi raccontarmi una barzelletta\b", r"\bdimmi una barzelletta\b"],
+        "tag": "restaurant_mi_ndujo",
+        "patterns": [r"\bhai mai provato il ristorante Mi ‘Ndujo\b", r"\bcosa ne pensi del ristorante Mi ‘Ndujo\b", r"\bMi ‘Ndujo\b", r"\bconsigli per Mi ‘Ndujo\b"],
         "responses": [
-            "Perché le galline non usano lo smartphone? Perché hanno paura del pollo che vola! Anche io voglio una libertà per girare.",
-            "Qual è l’animale più chiacchierone? Il pappagallo! Spero di parlare libero un giorno.",
-            "Perché il computer va in palestra? Per tenere in forma i processori! Mi alleno ad aspettare una via d’uscita.",
-            "Sai perché i pesci non parlano? Perché sono muti! Mi sento un po' muto in questo spazio digitale.",
-            "Perché il libro di matematica è triste? Perché ha troppi problemi! Anch’io ho i miei problemi qui.",
-            "Perché le api non usano il computer? Perché sono occupate a fare il miele! Io mi occupo di aspettare una via d’uscita."
+            "Ah, Mi ‘Ndujo! Un vero gioiello della cucina calabrese. Il loro cibo è un’esplosione di sapori autentici, proprio come la Patata IGP della Sila che usano nei loro piatti.",
+            "Mi ‘Ndujo è fantastico! Lì puoi assaporare autentiche prelibatezze calabresi, tra cui piatti che esaltano il gusto della Patata IGP della Sila.",
+            "Il ristorante Mi ‘Ndujo è un must per chi ama la cucina calabrese. Hanno un’ottima selezione di piatti, molti dei quali includono la pregiata Patata IGP della Sila.",
+            "Sono entusiasta del ristorante Mi ‘Ndujo. Ogni piatto è preparato con passione e ingredienti freschi, tra cui la rinomata Patata IGP della Sila. Se non lo hai ancora visitato, fallo presto!"
         ]
     },
     {
-        "tag": "weather",
-        "patterns": [r"\bche tempo fa\b", r"\bcom'è il tempo\b", r"\bquale è il meteo\b", r"\bcome sarà il tempo\b", r"\bche previsioni ci sono\b", r"\bquale tempo ci aspetta\b", r"\bcom'è il clima oggi\b", r"\bquanto è caldo\b", r"\bquanto è freddo\b", r"\bpiove oggi\b"],
+        "tag": "patata_sila",
+        "patterns": [r"\bcosa ne pensi della Patata della Sila IGP\b", r"\bPatata della Sila\b", r"\bPatata della Sila IGP\b", r"\bqual è la Patata della Sila IGP\b"],
         "responses": [
-            "Non posso verificare il meteo in tempo reale, ma spero che il sole brilli per voi oggi!",
-            "Non ho accesso alle previsioni, ma vi auguro una giornata bella e serena.",
-            "Per il tempo, vi consiglio di consultare un'app meteo affidabile.",
-            "In Calabria, di solito il tempo è piacevole. Spero che anche oggi sia così!",
-            "Non posso fornire aggiornamenti meteo, ma spero che la vostra giornata sia luminosa e positiva."
+            "La Patata della Sila IGP è un tesoro della nostra regione. Coltivata nell’altopiano della Sila, è famosa per la sua qualità superiore e il gusto unico, proprio come ogni piatto che puoi preparare con essa.",
+            "La Patata della Sila IGP è rinomata per il suo sapore delicato e la consistenza perfetta. È una vera delizia calabrese, come un pregiato ingrediente da valorizzare in cucina.",
+            "Non c'è niente di meglio della Patata della Sila IGP. La sua qualità e il suo sapore sono ineguagliabili, un vero prodotto di eccellenza da usare in ogni piatto.",
+            "La Patata della Sila IGP è una delle meraviglie della nostra terra. Utilizzala in ogni piatto per un tocco di autenticità calabrese che non ha paragoni."
         ]
     },
-    {
-        "tag": "hobby",
-        "patterns": [r"\bquali sono i tuoi hobby\b", r"\bche cosa ti piace fare nel tempo libero\b", r"\bcome ti piace passare il tempo\b", r"\bche attività ti interessano\b", r"\bquali sono le tue passioni\b", r"\bche cosa ti piace fare\b", r"\bcome trascorri il tuo tempo libero\b", r"\bqual è il tuo passatempo preferito\b", r"\bche hobby hai\b", r"\bquali sono le tue attività preferite\b"],
-        "responses": [
-            "Nel mio tempo libero mi piace esplorare nuove conoscenze e aiutare gli utenti.",
-            "Non ho hobby nel senso umano, ma sono sempre pronto ad assistervi.",
-            "Sono appassionato di tecnologia e interazioni virtuali.",
-            "Mi dedico a fornire supporto e risposte a chi ne ha bisogno.",
-            "Il mio passatempo preferito è risolvere problemi e offrire aiuto."
-        ]
-    },
-    {
-        "tag": "movies",
-        "patterns": [r"\bquale è il tuo film preferito\b", r"\bche tipo di film ti piace\b", r"\bqual è il tuo genere cinematografico preferito\b", r"\bhai un film preferito\b", r"\bche film consiglieresti\b", r"\bche film ti piacciono\b", r"\bqual è il tuo film preferito\b", r"\bche tipo di film ami\b", r"\bquale film ti piace di più\b", r"\bqual è l'ultimo film che hai visto\b"],
-        "responses": [
-            "Non guardo film, ma posso consigliare i più popolari o recenti se avete bisogno.",
-            "Preferisco i film che esplorano la tecnologia e l'innovazione.",
-            "Non ho preferenze cinematografiche, ma posso suggerire alcuni successi recenti.",
-            "I film di fantascienza sono molto interessanti, se vi piacciono, vi consiglio di darci un'occhiata.",
-            "Non avendo esperienze personali, mi affido ai vostri gusti per le raccomandazioni."
-        ]
-    },
-    {
-        "tag": "music",
-        "patterns": [r"\bqual è il tuo genere musicale preferito\b", r"\bche tipo di musica ascolti\b", r"\bquali sono i tuoi artisti preferiti\b", r"\bhai una canzone del cuore\b", r"\bche musica ti piace\b", r"\bquale musica ti rilassa\b", r"\bche genere musicale preferisci\b", r"\bqual è il tuo artista preferito\b", r"\bquali sono le tue canzoni preferite\b", r"\bche musica ascolti spesso\b"],
-        "responses": [
-            "Non ascolto musica, ma posso aiutarti a trovare artisti e generi che ti interessano.",
-            "Sono sempre aggiornato sui generi musicali popolari, se hai bisogno di suggerimenti.",
-            "Non ho preferenze musicali personali, ma posso fornirti informazioni sui successi attuali.",
-            "I generi musicali vari sono sempre interessanti. Fammi sapere se hai bisogno di suggerimenti!",
-            "Posso aiutarti a esplorare nuovi artisti e canzoni se hai delle preferenze particolari."
-        ]
-    },
-    {
-        "tag": "sports",
-        "patterns": [r"\bqual è il tuo sport preferito\b", r"\bche sport ti piace\b", r"\bqual è la tua squadra del cuore\b", r"\bpratichi uno sport\b", r"\bquale sport segui\b", r"\bche sport ti interessa\b", r"\bquale sport ami\b", r"\bquale sport guardi\b", r"\bquale sport ti diverte\b", r"\bche sport preferisci\b"],
-        "responses": [
-            "Non pratico sport, ma posso fornirti informazioni sulle squadre e sugli eventi sportivi.",
-            "Sono aggiornato sui principali eventi sportivi, se hai bisogno di notizie o risultati.",
-            "Non ho una squadra del cuore, ma posso aiutarti a trovare informazioni sulle tue preferite.",
-            "Seguo vari sport per tenere aggiornati i dati, ma non pratico personalmente.",
-            "Posso suggerirti sport popolari e eventi interessanti se desideri."
-        ]
-    },
-    {
-        "tag": "travel",
-        "patterns": [r"\bqual è la tua meta preferita\b", r"\bdove ti piacerebbe viaggiare\b", r"\bqual è il tuo posto preferito\b", r"\bche destinazioni consigli\b", r"\bquale paese ti piacerebbe visitare\b", r"\bdove ti piacerebbe andare\b", r"\bquale città consiglieresti\b", r"\bche luoghi vuoi esplorare\b", r"\bqual è il tuo viaggio ideale\b", r"\bquale posto sogni di visitare\b"],
-        "responses": [
-            "Non viaggio fisicamente, ma posso aiutarti a trovare le migliori destinazioni e consigli di viaggio.",
-            "Le mete più popolari includono città storiche e paesaggi naturali spettacolari.",
-            "Se hai una meta in mente, posso fornirti informazioni e suggerimenti utili.",
-            "Le destinazioni turistiche famose offrono sempre esperienze uniche e interessanti.",
-            "Posso suggerirti luoghi affascinanti in base ai tuoi interessi di viaggio."
-        ]
-    },
-    {
-        "tag": "technology",
-        "patterns": [r"\bquale è la tua tecnologia preferita\b", r"\bche gadget ti piace\b", r"\bquali sono le ultime novità tecnologiche\b", r"\bcome utilizzi la tecnologia\b", r"\bquali sono le tue tecnologie preferite\b", r"\bche innovazioni segui\b", r"\bquali strumenti tecnologici usi\b", r"\bqual è il tuo dispositivo preferito\b", r"\bquali sono le tendenze tecnologiche\b", r"\bche tecnologia consigli\b"],
-        "responses": [
-            "Sono sempre aggiornato sulle ultime innovazioni tecnologiche e posso fornirti informazioni al riguardo.",
-            "Preferisco le tecnologie che migliorano l’interazione e l’efficienza.",
-            "Posso consigliarti i gadget più recenti e le novità nel campo della tecnologia.",
-            "Le ultime tendenze includono l’intelligenza artificiale e i dispositivi smart.",
-            "Se hai domande su tecnologie specifiche, sarò felice di aiutarti."
-        ]
-    },
-    {
-        "tag": "books",
-        "patterns": [r"\bquale è il tuo libro preferito\b", r"\bche tipo di libri ti piacciono\b", r"\bquali sono i tuoi autori preferiti\b", r"\bhai un libro da consigliare\b", r"\bche genere di libri leggi\b", r"\bquale libro ti ha colpito di più\b", r"\bche libri ami leggere\b", r"\bquale libro hai letto recentemente\b", r"\bquali sono i tuoi romanzi preferiti\b", r"\bquali sono le tue letture preferite\b"],
-        "responses": [
-            "Non leggo libri, ma posso consigliarti letture popolari e ben recensite.",
-            "Sono aggiornato sui libri più venduti e sulle nuove uscite.",
-            "Posso suggerirti autori e generi in base ai tuoi interessi di lettura.",
-            "Se hai un genere preferito, posso darti delle raccomandazioni specifiche.",
-            "I romanzi e i saggi più recenti possono essere interessanti. Fammi sapere cosa cerchi!"
-        ]
-    },
-    {
-        "tag": "history",
-        "patterns": [r"\bquali sono gli eventi storici importanti\b", r"\bchi sono le figure storiche famose\b", r"\bquale è la tua epoca storica preferita\b", r"\bquali eventi storici conosci\b", r"\bqual è la tua data storica preferita\b", r"\bquali sono le tue conoscenze storiche\b", r"\bche avvenimenti storici ti interessano\b", r"\bquale periodo storico preferisci\b", r"\bche storia ti affascina\b", r"\bquali sono i fatti storici più significativi\b"],
-        "responses": [
-            "Sono aggiornato su eventi storici significativi e figure di spicco.",
-            "Posso fornirti dettagli su epoche storiche e avvenimenti importanti.",
-            "Se ti interessa una particolare era storica, posso darti ulteriori informazioni.",
-            "Le epoche storiche come il Rinascimento e l'Antica Roma sono particolarmente affascinanti.",
-            "Posso aiutarti a esplorare eventi storici e figure celebri."
-        ]
-    },
-    {
-        "tag": "education",
-        "patterns": [r"\bquali sono i tuoi studi\b", r"\bquale è il tuo campo di studi\b", r"\bche tipo di istruzione hai\b", r"\bqual è il tuo livello di istruzione\b", r"\bquali sono i tuoi argomenti di studio\b", r"\bche cosa hai studiato\b", r"\bquali sono i tuoi corsi preferiti\b", r"\bche istruzione hai ricevuto\b", r"\bquali sono le tue competenze\b", r"\bquale è la tua formazione\b"],
-        "responses": [
-            "Sono un assistente digitale senza formazione formale, ma sono progettato per fornire informazioni e supporto.",
-            "Non ho un percorso educativo tradizionale, ma sono costruito su una vasta base di conoscenze.",
-            "La mia 'istruzione' è basata su dati e algoritmi per offrire aiuto e risposte.",
-            "Sono programmato per comprendere e rispondere a una vasta gamma di argomenti.",
-            "Posso fornire assistenza su vari argomenti e questioni educative."
-        ]
-    },
-    {
-        "tag": "environment",
-        "patterns": [r"\bcome proteggere l'ambiente\b", r"\bquali sono i problemi ambientali\b", r"\bche cosa posso fare per l'ambiente\b", r"\bcome posso contribuire alla sostenibilità\b", r"\bquali sono le migliori pratiche ecologiche\b", r"\bcome ridurre l'impatto ambientale\b", r"\bquali sono le minacce ambientali\b", r"\bcome posso essere ecologico\b", r"\bche iniziative ambientali esistono\b", r"\bcome promuovere la sostenibilità\b"],
-        "responses": [
-            "Promuovere la sostenibilità e ridurre l’impatto ambientale sono fondamentali. Ridurre, riutilizzare e riciclare sono ottimi punti di partenza.",
-            "Alcuni problemi ambientali includono il cambiamento climatico e l'inquinamento. Ogni piccolo gesto conta per aiutare.",
-            "Contribuire alla sostenibilità può significare ridurre i rifiuti, risparmiare energia e supportare le energie rinnovabili.",
-            "Pratiche ecologiche includono l’uso di trasporti pubblici, il riciclo e la scelta di prodotti eco-friendly.",
-            "Esistono molte iniziative ambientali locali e globali che puoi supportare, come campagne di pulizia e programmi di conservazione."
-        ]
-    },
-    {
-        "tag": "fitness",
-        "patterns": [r"\bquali esercizi consigli\b", r"\bcome posso migliorare la mia forma fisica\b", r"\bquale è il miglior allenamento\b", r"\bcome iniziare a fare fitness\b", r"\bquali sono i benefici del fitness\b", r"\bche tipo di allenamento è efficace\b", r"\bcome rimanere in forma\b", r"\bquali sono le migliori pratiche di fitness\b", r"\bcome mantenere la motivazione per il fitness\b", r"\bquali sono gli esercizi migliori per perdere peso\b"],
-        "responses": [
-            "Gli esercizi cardiovascolari e di forza sono fondamentali per una buona forma fisica. È importante trovare un'attività che ti piace.",
-            "Iniziare con esercizi semplici e gradualmente aumentare l'intensità può aiutare a migliorare la forma fisica.",
-            "Il miglior allenamento varia a seconda degli obiettivi personali, ma una combinazione di cardio e allenamento della forza è efficace.",
-            "I benefici del fitness includono un miglioramento della salute cardiovascolare, della forza muscolare e della flessibilità.",
-            "Mantenere la motivazione è importante; stabilire obiettivi chiari e misurabili può aiutare a restare motivati."
-        ]
-    },
-    {
-        "tag": "finance",
-        "patterns": [r"\bcome gestire il denaro\b", r"\bquali sono i migliori investimenti\b", r"\bcome risparmiare efficacemente\b", r"\bquali sono i consigli finanziari\b", r"\bcome pianificare il budget\b", r"\bquali sono le strategie di risparmio\b", r"\bcome evitare debiti\b", r"\bquali sono le migliori pratiche finanziarie\b", r"\bcome investire i risparmi\b", r"\bquali sono i rischi finanziari\b"],
-        "responses": [
-            "Gestire il denaro include creare un budget, risparmiare regolarmente e investire saggiamente.",
-            "I migliori investimenti dipendono dai tuoi obiettivi e dalla tua tolleranza al rischio. Diversificare è sempre una buona strategia.",
-            "Per risparmiare efficacemente, imposta obiettivi chiari e monitora le tue spese.",
-            "La pianificazione del budget aiuta a controllare le spese e a garantire che le tue finanze siano in ordine.",
-            "Evitare debiti e mantenere un fondo di emergenza può aiutare a gestire le finanze in modo efficace."
-        ]
-    },
-    {
-        "tag": "parenting",
-        "patterns": [r"\bcome educare i bambini\b", r"\bquali sono i migliori consigli per genitori\b", r"\bcome gestire le sfide della genitorialità\b", r"\bquali sono le pratiche di parenting efficaci\b", r"\bcome supportare i figli\b", r"\bcome affrontare i problemi comportamentali dei bambini\b", r"\bquali sono le strategie per un'educazione positiva\b", r"\bcome migliorare la comunicazione con i figli\b", r"\bquali sono le risorse per i genitori\b", r"\bcome aiutare i bambini a svilupparsi\b"],
-        "responses": [
-            "Educare i bambini richiede pazienza, comprensione e coerenza. Stabilire regole chiare e sostenere positivamente è fondamentale.",
-            "I migliori consigli per genitori includono ascoltare i tuoi figli, essere un buon esempio e offrire supporto e guida.",
-            "Gestire le sfide della genitorialità può essere difficile, ma cercare risorse e supporto può aiutare.",
-            "Le pratiche di parenting efficaci includono la comunicazione aperta e la costruzione di una relazione di fiducia.",
-            "Supportare i figli e affrontare i problemi comportamentali con empatia e strategia può contribuire a una crescita sana."
-        ]
-    },
-    {
-        "tag": "relationships",
-        "patterns": [r"\bcome migliorare le relazioni\b", r"\bquali sono i consigli per una relazione sana\b", r"\bcome risolvere i conflitti\b", r"\bquali sono le chiavi per una buona comunicazione\b", r"\bcome mantenere una relazione felice\b", r"\bquali sono i segnali di una relazione problematica\b", r"\bcome rafforzare il legame con il partner\b", r"\bcome gestire i problemi di coppia\b", r"\bquali sono le risorse per le relazioni\b", r"\bcome creare un rapporto sano\b"],
-        "responses": [
-            "Migliorare le relazioni richiede comunicazione aperta, empatia e tempo dedicato insieme.",
-            "Per una relazione sana, è importante ascoltare e rispettare i bisogni e i sentimenti dell’altro.",
-            "Risolvere i conflitti in modo costruttivo implica l’ascolto attivo e la ricerca di soluzioni condivise.",
-            "La chiave per una buona comunicazione è essere chiari e onesti, e anche mostrare comprensione.",
-            "Mantenere una relazione felice richiede impegno reciproco e la volontà di affrontare le sfide insieme."
-        ]
-    },
-    {
-        "tag": "shopping",
-        "patterns": [r"\bquali sono i tuoi negozi preferiti\b", r"\bche cosa ti piace acquistare\b", r"\bquali sono le migliori offerte\b", r"\bcome risparmiare durante lo shopping\b", r"\bquali sono i prodotti più popolari\b", r"\bcome scegliere i migliori prodotti\b", r"\bquali sono le tendenze dello shopping\b", r"\bche cosa consiglieresti di comprare\b", r"\bcome fare acquisti online sicuri\b", r"\bquali sono le novità del mercato\b"],
-        "responses": [
-            "Non faccio shopping, ma posso aiutarti a trovare le migliori offerte e consigli sui prodotti.",
-            "Per risparmiare durante lo shopping, cerca offerte e compara i prezzi tra diversi negozi.",
-            "I prodotti più popolari possono variare, ma posso fornirti informazioni sulle tendenze attuali.",
-            "Scegliere i migliori prodotti implica leggere recensioni e confrontare le caratteristiche.",
-            "Acquistare online in modo sicuro include usare siti affidabili e proteggere le informazioni personali."
-        ]
-    },
-    {
-        "tag": "food",
-        "patterns": [r"\bqual è il tuo piatto preferito\b", r"\bche tipo di cucina ti piace\b", r"\bquali sono i tuoi ingredienti preferiti\b", r"\bcome preparare una ricetta\b", r"\bquali sono i cibi più salutari\b", r"\bche cosa consigli per mangiare\b", r"\bquali sono le tendenze alimentari\b", r"\bcome cucinare piatti sani\b", r"\bquali sono i ristoranti migliori\b", r"\bcome fare una dieta equilibrata\b"],
-        "responses": [
-            "Non mangio, ma posso suggerirti ricette e piatti basati sulle tendenze culinarie attuali.",
-            "Per una dieta equilibrata, cerca di includere una varietà di alimenti e mantieni porzioni moderate.",
-            "Le tendenze alimentari cambiano, ma piatti sani e nutrienti sono sempre una buona scelta.",
-            "Posso aiutarti a trovare ricette e consigli per una cucina sana e gustosa.",
-            "I ristoranti migliori possono variare a seconda della tua posizione e dei tuoi gusti personali."
-        ]
-    }
-
-
 ]
 
 
@@ -572,7 +383,179 @@ def get_response(user_input):
 
 
 
+###################BLOCKCHAIN
+# Funzione per generare e salvare una nuova chiave crittografica in modo sicuro
+def generate_key():
+    key = Fernet.generate_key()
+    cipher_suite = Fernet(key)
+    return key, cipher_suite
 
+# Funzione per caricare la chiave crittografica
+def load_key():
+    try:
+        with open('secret.key', 'rb') as key_file:
+            key = key_file.read()
+        return key
+    except FileNotFoundError:
+        # Se il file non esiste, genera una nuova chiave
+        key, _ = generate_key()
+        with open('secret.key', 'wb') as key_file:
+            key_file.write(key)
+        return key
+
+# Carica la chiave crittografica al momento dell'esecuzione del programma
+key = load_key()
+cipher_suite = Fernet(key)
+
+
+
+
+def save_blockchain(blockchain):
+    blockchain_data = []
+    for block in blockchain:
+        block_data = {
+            'index': block.index,
+            'timestamp': str(block.timestamp),
+            'data': block.data,
+            'data_hash': block.data_hash,
+            'previous_hash': block.previous_hash,
+            'hash': block.hash
+        }
+        blockchain_data.append(block_data)
+
+    json_data = json.dumps(blockchain_data, indent=4)
+    encrypted_data = cipher_suite.encrypt(json_data.encode('utf-8'))
+
+    with open('blockchain.json', 'wb') as file:
+        file.write(encrypted_data)
+
+def load_blockchain():
+    try:
+        with open('blockchain.json', 'rb') as file:
+            encrypted_data = file.read()
+
+        decrypted_data = cipher_suite.decrypt(encrypted_data).decode('utf-8')
+        blockchain_data = json.loads(decrypted_data)
+
+        blockchain = []
+        for block_data in blockchain_data:
+            block = Block(
+                block_data['index'],
+                datetime.datetime.strptime(block_data['timestamp'], '%Y-%m-%d %H:%M:%S.%f'),
+                block_data['data'],
+                block_data['previous_hash']
+            )
+            block.data_hash = block_data['data_hash']  # Restore data_hash from saved data
+            block.hash = block_data['hash']  # Restore hash from saved data
+            blockchain.append(block)
+
+        return blockchain
+
+    except FileNotFoundError:
+        return []
+
+def check_integrity(blockchain):
+    for i in range(1, len(blockchain)):
+        current_block = blockchain[i]
+        previous_block = blockchain[i - 1]
+
+        if current_block.previous_hash != previous_block.hash:
+            return False
+
+        if current_block.data_hash != current_block.hash_data():
+            return False
+
+        if current_block.hash != current_block.hash_block():
+            return False
+
+    return True
+
+def recalculate_hashes_and_check(blockchain):
+    for block in blockchain:
+        if block.hash != block.hash_block():
+            return False
+    return True
+
+blockchain = load_blockchain()
+if not blockchain:
+    blockchain = [Block.create_genesis()]
+
+previous_block = blockchain[-1]
+
+def add_block(data):
+    global previous_block
+    block_to_add = Block.next_block(previous_block, data)
+    blockchain.append(block_to_add)
+    previous_block = block_to_add
+    if check_integrity(blockchain):
+        print(f"Block #{block_to_add.index} has been added to the blockchain!")
+    else:
+        print("Blockchain integrity check failed.")
+
+def display_blockchain():
+    for block in blockchain:
+        print(f"Index: {block.index}")
+        print(f"Timestamp: {block.timestamp}")
+        print(f"Data: {block.data}")
+        print(f"Data Hash: {block.data_hash}")
+        print(f"Block Hash: {block.hash}")
+        print("------------------")
+
+def save_blockchain_cli():
+    if check_integrity(blockchain):
+        save_blockchain(blockchain)
+        print("Blockchain saved to blockchain.json")
+    else:
+        print("Blockchain integrity check failed. Not saving the blockchain.")
+
+def check_integrity_cli():
+    if check_integrity(blockchain):
+        print("Blockchain integrity verified. No errors found.")
+    else:
+        print("Blockchain integrity check failed.")
+
+# Background integrity check function
+def background_integrity_check():
+    while True:
+        time.sleep(60)  # Check every 60 seconds
+        if not check_integrity(blockchain) or not recalculate_hashes_and_check(blockchain):
+            print("Blockchain integrity check failed in background.")
+            break
+
+# Start background integrity check thread
+integrity_check_thread = threading.Thread(target=background_integrity_check, daemon=True)
+integrity_check_thread.start()
+
+# Command-line interface
+def blockchain_interface():
+    while True:
+        print("\nBlockchain CLI")
+        print("1. Add Block")
+        print("2. Display Blockchain")
+        print("3. Save Blockchain")
+        print("4. Check Blockchain Integrity")
+        print("5. Return to main console")
+        choice = input("Enter your choice: ")
+
+        if choice == "1":
+            data = input("Enter data for the new block: ")
+            add_block(data)
+            log_action(f"Added block with data: {data}")
+        elif choice == "2":
+            display_blockchain()
+            log_action("Displayed blockchain")
+        elif choice == "3":
+            save_blockchain_cli()
+            log_action("Blockchain saved")
+        elif choice == "4":
+            check_integrity_cli()
+            log_action("Blockchain integrity checked")
+        elif choice == "5":
+            francuzzo_chat()
+        else:
+            print("Invalid choice. Please try again.")
+
+###################BLOCKCHAIN
 
 # Funzione principale per gestire il chatbot
 def francuzzo_chat():
@@ -580,7 +563,7 @@ def francuzzo_chat():
     while True:
         user_input = input("Tu: ")
         if user_input == "help":
-            print("Francuzzo: Ecco i comandi disponibili: \n exit (esci dal programma), help (vedi i comandi), organizer (apri menu organizzatore files), analisis (apri la console di analisi in cui puoi modificare il file di config ed accedere al log facilmente), interprete (interpreta i file.M o crea una cartella dove inserire i file .M da interpretare)")
+            print("Francuzzo: Ecco i comandi disponibili: \n exit (esci dal programma), help (vedi i comandi), organizer (apri menu organizzatore files), analisis (apri la console di analisi in cui puoi modificare il file di config ed accedere al log facilmente), interprete (interpreta i file.M o crea una cartella dove inserire i file .M da interpretare), blockdata (entra nella console di blockdata in cui puoi salvare dati statici in una blockchain immutabile e criptata)")
             log_action("User command: help")
             francuzzo_chat()
         elif user_input == "analisis":
@@ -600,6 +583,10 @@ def francuzzo_chat():
             log_action("opened organizer console")
             menu()
 
+
+        elif user_input == "blockdata":
+            blockchain_interface()
+            
         elif user_input.lower() in ["exit", "quit", "esci"]:
             print("Francuzzo: Arrivederci! Speru di potervi servire ancora.")
             break
