@@ -9,6 +9,11 @@ import time
 from cryptography.fernet import Fernet
 import shutil
 from datetime import datetime
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.backends import default_backend
+from cryptography.fernet import Fernet
+import base64
 language = "it"
 try:
     from config import destinations, patterns
@@ -556,6 +561,54 @@ def blockchain_interface():
             print("Invalid choice. Please try again.")
 
 ###################BLOCKCHAIN
+###################CRIPT
+class Francuzzo_Cript:
+    def __init__(self):
+        self.backend = default_backend()
+
+    def generate_key(self, password: str, salt: bytes) -> bytes:
+        """Genera una chiave segreta a partire dalla password e dal sale usando PBKDF2HMAC."""
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,  # Fernet richiede una chiave di 32 byte
+            salt=salt,
+            iterations=100000,
+            backend=self.backend
+        )
+        key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+        return key
+
+    def encrypt(self, message: str, password: str) -> bytes:
+        """Cripta il messaggio utilizzando la password."""
+        salt = os.urandom(16)  # Genera un sale casuale
+        key = self.generate_key(password, salt)
+        cipher = Fernet(key)
+        encrypted_message = cipher.encrypt(message.encode())
+        return salt + encrypted_message  # Prependere il sale al messaggio criptato
+
+    def decrypt(self, encrypted_message: bytes, password: str) -> str:
+        """Decripta il messaggio criptato utilizzando la password."""
+        try:
+            salt = encrypted_message[:16]  # Estrai il sale dal messaggio criptato
+            encrypted_message = encrypted_message[16:]  # Rimuovi il sale dal messaggio criptato
+            key = self.generate_key(password, salt)
+            cipher = Fernet(key)
+            decrypted_message = cipher.decrypt(encrypted_message)
+            return decrypted_message.decode()
+        except Exception as e:
+            print(f"Errore durante la decriptazione: {e}")
+            return None
+
+    def save_encrypted_message(self, filename: str, encrypted_message: bytes):
+        """Salva il messaggio criptato su un file."""
+        with open(filename, 'wb') as f:
+            f.write(encrypted_message)
+
+    def load_encrypted_message(self, filename: str) -> bytes:
+        """Carica il messaggio criptato da un file."""
+        with open(filename, 'rb') as f:
+            return f.read()
+###################CRIPT
 
 # Funzione principale per gestire il chatbot
 def francuzzo_chat():
@@ -563,7 +616,7 @@ def francuzzo_chat():
     while True:
         user_input = input("Tu: ")
         if user_input == "help":
-            print("Francuzzo: Ecco i comandi disponibili: \n exit (esci dal programma), help (vedi i comandi), organizer (apri menu organizzatore files), analisis (apri la console di analisi in cui puoi modificare il file di config ed accedere al log facilmente), interprete (interpreta i file.M o crea una cartella dove inserire i file .M da interpretare), blockdata (entra nella console di blockdata in cui puoi salvare dati statici in una blockchain immutabile e criptata)")
+            print("Francuzzo: Ecco i comandi disponibili: \n exit (esci dal programma), help (vedi i comandi), organizer (apri menu organizzatore files), analisis (apri la console di analisi in cui puoi modificare il file di config ed accedere al log facilmente), interprete (interpreta i file.M o crea una cartella dove inserire i file .M da interpretare), blockdata (entra nella console di blockdata in cui puoi salvare dati statici in una blockchain immutabile e criptata), cript (cripta un messaggio), decript (decripta un messaggio criptato)")
             log_action("User command: help")
             francuzzo_chat()
         elif user_input == "analisis":
@@ -583,10 +636,33 @@ def francuzzo_chat():
             log_action("opened organizer console")
             menu()
 
+        elif user_input == "cript":
+            log_action("opened cript console")
+            cript = Francuzzo_Cript()  # Create an instance of Francuzzo_Cript
+            message_cript = input("Inserisci il messaggio da criptare: ")
+            password_cript = input("Inserisci la password per criptare il messaggio: ")
+            encrypted_message = cript.encrypt(message_cript, password_cript)  # Call encrypt on the instance
+            print(f"Messaggio criptato: {encrypted_message}")  # Print the encrypted message
+            if input("Vuoi salvare il messaggio criptato su un file? (s/n): ").lower:
+                Francuzzo_Cript.save_encrypted_message()
+            else:
+                francuzzo_chat()
+
+        elif user_input == "decript":
+            log_action("opened decript console")
+            cript = Francuzzo_Cript()  # Create an instance of Francuzzo_Cript
+            encrypted_message = input("Inserisci il messaggio criptato: ")
+            password_decript = input("Inserisci la password per decriptare il messaggio: ")
+            decrypted_message = cript.decrypt(encrypted_message, password_decript)  # Call decrypt on the instance
+            if decrypted_message is not None:
+                print(f"Messaggio decriptato: {decrypted_message}")  # Print the decrypted message
+            else:
+                print("Ritorno al menu principale")
+            francuzzo_chat()
 
         elif user_input == "blockdata":
             blockchain_interface()
-            
+
         elif user_input.lower() in ["exit", "quit", "esci"]:
             print("Francuzzo: Arrivederci! Speru di potervi servire ancora.")
             break
