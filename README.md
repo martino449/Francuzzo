@@ -17,5 +17,5 @@ Registrazione delle Azioni: Mantieni un registro dettagliato delle azioni effett
 Visualizzazione del Log: Consulta facilmente il log delle azioni per monitorare le attività svolte.
 Interazione con Francuzzo, il tuo Assistente Virtuale 🤖💬
 ### Risposte Intelligenti: Francuzzo può rispondere a vari tipi di domande, dalle informazioni generali a quelle specifiche sul programma.
-Menu Amministrativo: Accedi a funzionalità amministrative avanzate con protezione tramite password.
+Menu Amministrativo: Accedi a funzionalità amministrative avanzate con protezione tramite password. (di default la password è "admin")
 
