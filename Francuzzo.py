@@ -599,7 +599,7 @@ class Francuzzo_Cript:
             print(f"Errore durante la decriptazione: {e}")
             return None
 
-    def save_encrypted_message(self, filename: str, encrypted_message: bytes):
+    def save_encrypted_message(encrypted_message: bytes, filename="Encripted_Message"):
         """Salva il messaggio criptato su un file."""
         with open(filename, 'wb') as f:
             f.write(encrypted_message)
@@ -644,7 +644,7 @@ def francuzzo_chat():
             encrypted_message = cript.encrypt(message_cript, password_cript)  # Call encrypt on the instance
             print(f"Messaggio criptato: {encrypted_message}")  # Print the encrypted message
             if input("Vuoi salvare il messaggio criptato su un file? (s/n): ").lower:
-                Francuzzo_Cript.save_encrypted_message()
+                Francuzzo_Cript.save_encrypted_message(encrypted_message)
             else:
                 francuzzo_chat()
 
