@@ -16,6 +16,3 @@ Caricamento della Blockchain: Recupera e verifica i dati salvati in modo sicuro.
 Registrazione delle Azioni: Mantieni un registro dettagliato delle azioni effettuate per una migliore tracciabilità.
 Visualizzazione del Log: Consulta facilmente il log delle azioni per monitorare le attività svolte.
 Interazione con Francuzzo, il tuo Assistente Virtuale 🤖💬
-### Risposte Intelligenti: Francuzzo può rispondere a vari tipi di domande, dalle informazioni generali a quelle specifiche sul programma.
-Menu Amministrativo: Accedi a funzionalità amministrative avanzate con protezione tramite password. (di default la password è "admin")
-
